@@ -144,712 +144,131 @@ income: 20
 }
 };
 const towerTypes = {
-ranger: {
-name: "Ranger",
-icon: "🏹",
-cost: 180,
-color: "#2e7d32",
-damage: 35,
-range: 155,
-rate: 2.5
-},
-mage: {
-name: "Mage",
-icon: "🔮",
-cost: 230,
-color: "#7e57c2",
-damage: 48,
-range: 165,
-rate: 1.65,
-splash: 40
-},
-cannon: {
-name: "Cannon",
-icon: "💣",
-cost: 280,
-color: "#455a64",
-damage: 80,
-range: 140,
-rate: 1.15,
-splash: 60
-},
-ice: {
-name: "Ice",
-icon: "❄️",
-cost: 200,
-color: "#039be5",
-damage: 20,
-range: 135,
-rate: 1.8,
-slow: 0.5
-},
-sniper: {
-name: "Sniper",
-icon: "🎯",
-cost: 260,
-color: "#6d4c41",
-damage: 95,
-range: 900,
-rate: 0.5,
-detectInvisible: true
-},
-ninja: {
-name: "Ninja",
-icon: "🥷",
-cost: 400,
-color: "#212121",
-damage: 28,
-range: 245,
-rate: 3.5,
-detectInvisible: true
-},
-laser: {
-name: "Laser",
-icon: "🔴",
-cost: 320,
-color: "#c62828",
-damage: 60,
-range: 230,
-rate: 2.4,
-pierce: 3
-},
-poison: {
-name: "Poison",
-icon: "☠️",
-cost: 240,
-color: "#689f38",
-damage: 18,
-range: 155,
-rate: 1.9,
-poison: 8
-},
-glue: {
-name: "Glue",
-icon: "🍯",
-cost: 600,
-color: "#fbc02d",
-damage: 3,
-range: 180,
-rate: 2.2,
-slow: 0.35
-},
-farm: {
-name: "Farm",
-icon: "💰",
-cost: 700,
-color: "#ffb300",
-damage: 0,
-range: 0,
-rate: 0,
-income: 55,
-nonAttacking: true
-},
-fire: {
-name: "Fire",
-icon: "🔥",
-cost: 300,
-color: "#e65100",
-damage: 34,
-range: 160,
-rate: 1.9,
-splash: 45,
-burn: 10
-},
-lightning: {
-name: "Lightning",
-icon: "⚡",
-cost: 360,
-color: "#fdd835",
-damage: 42,
-range: 190,
-rate: 1.5,
-chain: 3
-},
-boomerang: {
-name: "Boomerang",
-icon: "🪃",
-cost: 220,
-color: "#ef6c00",
-damage: 28,
-range: 180,
-rate: 2.8,
-pierce: 3
-},
-human: {
-name: "Human",
-icon: "🧑",
-cost: 250,
-color: "#8d6e63",
-damage: 38,
-range: 170,
-rate: 2.5
-},
-waste: {
-name: "Waste Your Money",
-icon: "💸",
-cost: 2500,
-color: "#7f0000",
-damage: 50,
-range: 1000,
-rate: 1000
-},
-shotgun: {
-name: "Shotgunner",
-icon: "🔫",
-cost: 270,
-color: "#795548",
-damage: 30,
-range: 135,
-rate: 1.55,
-pierce: 5,
-splash: 30
-},
-mortar: {
-name: "Mortar",
-icon: "🧨",
-cost: 420,
-color: "#37474f",
-damage: 115,
-range: 330,
-rate: 0.72,
-splash: 105
-},
-minigun: {
-name: "Minigun",
-icon: "⚙️",
-cost: 680,
-color: "#546e7a",
-damage: 28,
-range: 155,
-rate: 8
-},
-acid: {
-name: "Acid",
-icon: "🧪",
-cost: 310,
-color: "#8bc34a",
-damage: 20,
-range: 170,
-rate: 2.1,
-poison: 13,
-splash: 35
-},
-crystal: {
-name: "Crystal",
-icon: "💎",
-cost: 390,
-color: "#00bcd4",
-damage: 47,
-range: 210,
-rate: 1.75,
-chain: 4,
-slow: 0.72
-},
-drone: {
-name: "Drone",
-icon: "🛸",
-cost: 350,
-color: "#5c6bc0",
-damage: 38,
-range: 285,
-rate: 3,
-detectInvisible: true
-},
-saw: {
-name: "Sawblade",
-icon: "🪚",
-cost: 330,
-color: "#9e9e9e",
-damage: 42,
-range: 175,
-rate: 2.4,
-pierce: 6
-},
-recycler: {
-name: "Recycler",
-icon: "♻️",
-cost: 540,
-color: "#00897b",
-damage: 27,
-range: 165,
-rate: 1.8,
-poison: 5,
-income: 32
-}
+ranger: { name: "Ranger", icon: "🏹", cost: 180, color: "#2e7d32", damage: 35, range: 155, rate: 2.5 },
+mage: { name: "Mage", icon: "🔮", cost: 230, color: "#7e57c2", damage: 48, range: 165, rate: 1.65, splash: 40 },
+cannon: { name: "Cannon", icon: "💣", cost: 280, color: "#455a64", damage: 80, range: 140, rate: 1.15, splash: 60 },
+ice: { name: "Ice", icon: "❄️", cost: 200, color: "#039be5", damage: 20, range: 135, rate: 1.8, slow: 0.5 },
+sniper: { name: "Sniper", icon: "🎯", cost: 260, color: "#6d4c41", damage: 95, range: 900, rate: 0.5, detectInvisible: true },
+ninja: { name: "Ninja", icon: "🥷", cost: 400, color: "#212121", damage: 28, range: 245, rate: 3.5, detectInvisible: true },
+laser: { name: "Laser", icon: "🔴", cost: 320, color: "#c62828", damage: 60, range: 230, rate: 2.4, pierce: 3 },
+poison: { name: "Poison", icon: "☠️", cost: 240, color: "#689f38", damage: 18, range: 155, rate: 1.9, poison: 8 },
+glue: { name: "Glue", icon: "🍯", cost: 600, color: "#fbc02d", damage: 3, range: 180, rate: 2.2, slow: 0.35 },
+farm: { name: "Farm", icon: "💰", cost: 700, color: "#ffb300", damage: 0, range: 0, rate: 0, income: 55, nonAttacking: true },
+fire: { name: "Fire", icon: "🔥", cost: 300, color: "#e65100", damage: 34, range: 160, rate: 1.9, splash: 45, burn: 10 },
+lightning: { name: "Lightning", icon: "⚡", cost: 360, color: "#fdd835", damage: 42, range: 190, rate: 1.5, chain: 3 },
+boomerang: { name: "Boomerang", icon: "🪃", cost: 220, color: "#ef6c00", damage: 28, range: 180, rate: 2.8, pierce: 3 },
+human: { name: "Human", icon: "🧑", cost: 250, color: "#8d6e63", damage: 38, range: 170, rate: 2.5 },
+waste: { name: "Waste Your Money", icon: "💸", cost: 2500, color: "#7f0000", damage: 50, range: 1000, rate: 1000 },
+shotgun: { name: "Shotgunner", icon: "🔫", cost: 270, color: "#795548", damage: 30, range: 135, rate: 1.55, pierce: 5, splash: 30 },
+mortar: { name: "Mortar", icon: "🧨", cost: 420, color: "#37474f", damage: 115, range: 330, rate: 0.72, splash: 105 },
+minigun: { name: "Minigun", icon: "⚙️", cost: 680, color: "#546e7a", damage: 28, range: 155, rate: 8 },
+acid: { name: "Acid", icon: "🧪", cost: 310, color: "#8bc34a", damage: 20, range: 170, rate: 2.1, poison: 13, splash: 35 },
+crystal: { name: "Crystal", icon: "💎", cost: 390, color: "#00bcd4", damage: 47, range: 210, rate: 1.75, chain: 4, slow: 0.72 },
+drone: { name: "Drone", icon: "🛸", cost: 350, color: "#5c6bc0", damage: 38, range: 285, rate: 3, detectInvisible: true },
+saw: { name: "Sawblade", icon: "🪚", cost: 330, color: "#9e9e9e", damage: 42, range: 175, rate: 2.4, pierce: 6 },
+recycler: { name: "Recycler", icon: "♻️", cost: 540, color: "#00897b", damage: 27, range: 165, rate: 1.8, poison: 5, income: 32 }
 };
 const evolutions = {
 ranger: [
-{
-id: "machine",
-name: "Machine Gunner",
-description: "Doubles attack speed and unlocks Overdrive.",
-damage: 1.3,
-rate: 2,
-range: 25,
-ability: "overdrive"
-},
-{
-id: "archer",
-name: "Elite Archer",
-description: "Heavy damage, range, and piercing arrows.",
-damage: 2,
-rate: 0.85,
-range: 100,
-pierce: 8
-}
+{ id: "machine", name: "Machine Gunner", description: "Doubles attack speed and unlocks Overdrive.", damage: 1.3, rate: 2, range: 25, ability: "overdrive" },
+{ id: "archer", name: "Elite Archer", description: "Heavy damage, range, and piercing arrows.", damage: 2, rate: 0.85, range: 100, pierce: 8 }
 ],
 mage: [
-{
-id: "storm",
-name: "Storm Wizard",
-description: "Chains attacks and unlocks Blizzard.",
-damage: 1.5,
-range: 50,
-chain: 6,
-ability: "blizzard"
-},
-{
-id: "necromancer",
-name: "Necromancer",
-description: "Curses enemies so they take more damage.",
-damage: 1.45,
-range: 60,
-curse: 0.3
-}
+{ id: "storm", name: "Storm Wizard", description: "Chains attacks and unlocks Blizzard.", damage: 1.5, range: 50, chain: 6, ability: "blizzard" },
+{ id: "necromancer", name: "Necromancer", description: "Curses enemies so they take more damage.", damage: 1.45, range: 60, curse: 0.3 }
 ],
 cannon: [
-{
-id: "missile",
-name: "Missile Launcher",
-description: "Extreme range and unlocks Air Strike.",
-damage: 1.8,
-range: 180,
-splash: 60,
-ability: "airStrike"
-},
-{
-id: "artillery",
-name: "Heavy Artillery",
-description: "Slow, devastating attacks with a massive blast.",
-damage: 3,
-rate: 0.55,
-range: 75,
-splash: 120
-}
+{ id: "missile", name: "Missile Launcher", description: "Extreme range and unlocks Air Strike.", damage: 1.8, range: 180, splash: 60, ability: "airStrike" },
+{ id: "artillery", name: "Heavy Artillery", description: "Slow, devastating attacks with a massive blast.", damage: 3, rate: 0.55, range: 75, splash: 120 }
 ],
 ice: [
-{
-id: "blizzard",
-name: "Blizzard Tower",
-description: "Freezes groups and unlocks Blizzard.",
-damage: 1.6,
-range: 75,
-splash: 90,
-slow: 0.2,
-ability: "blizzard"
-},
-{
-id: "deepFreeze",
-name: "Deep Freeze",
-description: "Almost stops enemies and hurts slowed targets.",
-damage: 2,
-range: 50,
-slow: 0.1,
-frozenBonus: 2
-}
+{ id: "blizzard", name: "Blizzard Tower", description: "Freezes groups and unlocks Blizzard.", damage: 1.6, range: 75, splash: 90, slow: 0.2, ability: "blizzard" },
+{ id: "deepFreeze", name: "Deep Freeze", description: "Almost stops enemies and hurts slowed targets.", damage: 2, range: 50, slow: 0.1, frozenBonus: 2 }
 ],
 sniper: [
-{
-id: "deadeye",
-name: "Deadeye",
-description: "Deals massive damage to bosses and elites.",
-damage: 2.1,
-bossBonus: 2,
-eliteBonus: 2
-},
-{
-id: "railgun",
-name: "Railgunner",
-description: "Shots pierce up to ten zombies.",
-damage: 1.7,
-rate: 1.15,
-pierce: 10
-}
+{ id: "deadeye", name: "Deadeye", description: "Deals massive damage to bosses and elites.", damage: 2.1, bossBonus: 2, eliteBonus: 2 },
+{ id: "railgun", name: "Railgunner", description: "Shots pierce up to ten zombies.", damage: 1.7, rate: 1.15, pierce: 10 }
 ],
 ninja: [
-{
-id: "shadow",
-name: "Shadow Master",
-description: "Very fast attacks with invisible bonus damage.",
-damage: 1.6,
-rate: 1.8,
-invisibleBonus: 2
-},
-{
-id: "assassin",
-name: "Assassin",
-description: "Has a chance to deal triple damage.",
-damage: 1.8,
-critChance: 0.25,
-critDamage: 3
-}
+{ id: "shadow", name: "Shadow Master", description: "Very fast attacks with invisible bonus damage.", damage: 1.6, rate: 1.8, invisibleBonus: 2 },
+{ id: "assassin", name: "Assassin", description: "Has a chance to deal triple damage.", damage: 1.8, critChance: 0.25, critDamage: 3 }
 ],
 laser: [
-{
-id: "plasma",
-name: "Plasma Beam",
-description: "Ignores armor and pierces many enemies.",
-damage: 1.8,
-range: 80,
-pierce: 12,
-ignoreArmor: true
-},
-{
-id: "deathRay",
-name: "Death Ray",
-description: "Massive damage against bosses.",
-damage: 2.2,
-range: 50,
-bossBonus: 1.8
-}
+{ id: "plasma", name: "Plasma Beam", description: "Ignores armor and pierces many enemies.", damage: 1.8, range: 80, pierce: 12, ignoreArmor: true },
+{ id: "deathRay", name: "Death Ray", description: "Massive damage against bosses.", damage: 2.2, range: 50, bossBonus: 1.8 }
 ],
 poison: [
-{
-id: "toxic",
-name: "Toxic Cloud",
-description: "Powerful poison spreads through a large area.",
-damage: 1.5,
-range: 60,
-splash: 100,
-poison: 20
-},
-{
-id: "plague",
-name: "Plague Doctor",
-description: "Poison ignores armor and weakens enemies.",
-damage: 1.7,
-range: 70,
-poison: 28,
-curse: 0.2,
-ignoreArmor: true
-}
+{ id: "toxic", name: "Toxic Cloud", description: "Powerful poison spreads through a large area.", damage: 1.5, range: 60, splash: 100, poison: 20 },
+{ id: "plague", name: "Plague Doctor", description: "Poison ignores armor and weakens enemies.", damage: 1.7, range: 70, poison: 28, curse: 0.2, ignoreArmor: true }
 ],
 glue: [
-{
-id: "superGlue",
-name: "Super Glue",
-description: "Almost completely stops enemies.",
-damage: 5,
-range: 80,
-slow: 0.08,
-curse: 0.2
-},
-{
-id: "glueStorm",
-name: "Glue Storm",
-description: "Covers large groups in glue.",
-damage: 3,
-range: 120,
-splash: 140,
-slow: 0.2
-}
+{ id: "superGlue", name: "Super Glue", description: "Almost completely stops enemies.", damage: 5, range: 80, slow: 0.08, curse: 0.2 },
+{ id: "glueStorm", name: "Glue Storm", description: "Covers large groups in glue.", damage: 3, range: 120, splash: 140, slow: 0.2 }
 ],
 farm: [
-{
-id: "megaFarm",
-name: "Mega Farm",
-description: "Triples income and unlocks Emergency Supplies.",
-income: 3,
-ability: "supplies"
-},
-{
-id: "buckFactory",
-name: "Zombie-Bucks Factory",
-description: "Doubles income and earns a Buck after bosses.",
-income: 2,
-bossBuck: 1
-}
+{ id: "megaFarm", name: "Mega Farm", description: "Triples income and unlocks Emergency Supplies.", income: 3, ability: "supplies" },
+{ id: "buckFactory", name: "Zombie-Bucks Factory", description: "Doubles income and earns a Buck after bosses.", income: 2, bossBuck: 1 }
 ],
 fire: [
-{
-id: "inferno",
-name: "Inferno",
-description: "Massive burn damage and unlocks Meteor.",
-damage: 1.8,
-range: 60,
-splash: 90,
-burn: 28,
-ability: "meteor"
-},
-{
-id: "flamethrower",
-name: "Flamethrower",
-description: "Rapid attacks that burn groups.",
-damage: 1.3,
-rate: 2.2,
-range: 40,
-splash: 55,
-burn: 18
-}
+{ id: "inferno", name: "Inferno", description: "Massive burn damage and unlocks Meteor.", damage: 1.8, range: 60, splash: 90, burn: 28, ability: "meteor" },
+{ id: "flamethrower", name: "Flamethrower", description: "Rapid attacks that burn groups.", damage: 1.3, rate: 2.2, range: 40, splash: 55, burn: 18 }
 ],
 lightning: [
-{
-id: "thunder",
-name: "Thunder God",
-description: "Chains through up to twelve enemies.",
-damage: 2,
-range: 80,
-chain: 12
-},
-{
-id: "tesla",
-name: "Tesla Coil",
-description: "Extremely fast chain lightning.",
-damage: 1.5,
-rate: 2,
-range: 50,
-chain: 7
-}
+{ id: "thunder", name: "Thunder God", description: "Chains through up to twelve enemies.", damage: 2, range: 80, chain: 12 },
+{ id: "tesla", name: "Tesla Coil", description: "Extremely fast chain lightning.", damage: 1.5, rate: 2, range: 50, chain: 7 }
 ],
 boomerang: [
-{
-id: "glaive",
-name: "Glaive Master",
-description: "Pierces up to twelve zombies.",
-damage: 2,
-range: 60,
-pierce: 12
-},
-{
-id: "ricochet",
-name: "Ricochet Master",
-description: "Rapidly bounces between enemies.",
-damage: 1.6,
-rate: 1.6,
-range: 70,
-chain: 8
-}
+{ id: "glaive", name: "Glaive Master", description: "Pierces up to twelve zombies.", damage: 2, range: 60, pierce: 12 },
+{ id: "ricochet", name: "Ricochet Master", description: "Rapidly bounces between enemies.", damage: 1.6, rate: 1.6, range: 70, chain: 8 }
 ],
 human: [
-{
-id: "guardian",
-name: "Guardian",
-description: "Powerful defender that unlocks Base Repair.",
-damage: 1.7,
-range: 60,
-ability: "repair"
-},
-{
-id: "hero",
-name: "Hero",
-description: "Critical hits and extra boss damage.",
-damage: 2.2,
-range: 70,
-critChance: 0.2,
-critDamage: 2.5,
-bossBonus: 1.6
-}
+{ id: "guardian", name: "Guardian", description: "Powerful defender that unlocks Base Repair.", damage: 1.7, range: 60, ability: "repair" },
+{ id: "hero", name: "Hero", description: "Critical hits and extra boss damage.", damage: 2.2, range: 70, critChance: 0.2, critDamage: 2.5, bossBonus: 1.6 }
 ],
 waste: [
-{
-id: "goldTrash",
-name: "Golden Trash",
-description: "It now produces one dollar per wave.",
-incomeFlat: 1
-},
-{
-id: "badInvestment",
-name: "Terrible Investment",
-description: "Still does absolutely nothing."
-}
+{ id: "goldTrash", name: "Golden Trash", description: "It now produces one dollar per wave.", incomeFlat: 1 },
+{ id: "badInvestment", name: "Terrible Investment", description: "Still does absolutely nothing." }
 ],
 shotgun: [
-{
-id: "breacher",
-name: "Zombie Breacher",
-description: "Fires huge piercing blasts.",
-damage: 2.1,
-range: 45,
-pierce: 12,
-splash: 55
-},
-{
-id: "autoShotgun",
-name: "Auto Shotgun",
-description: "Rapidly fires wide shotgun bursts.",
-damage: 1.45,
-rate: 2.2,
-pierce: 8,
-splash: 45
-}
+{ id: "breacher", name: "Zombie Breacher", description: "Fires huge piercing blasts.", damage: 2.1, range: 45, pierce: 12, splash: 55 },
+{ id: "autoShotgun", name: "Auto Shotgun", description: "Rapidly fires wide shotgun bursts.", damage: 1.45, rate: 2.2, pierce: 8, splash: 45 }
 ],
 mortar: [
-{
-id: "nuclear",
-name: "Nuclear Mortar",
-description: "Massive explosions that ignore armor.",
-damage: 2.4,
-splash: 165,
-ignoreArmor: true
-},
-{
-id: "rapidMortar",
-name: "Rapid Mortar",
-description: "Fires shells much faster.",
-damage: 1.5,
-rate: 2.1,
-range: 100,
-splash: 80
-}
+{ id: "nuclear", name: "Nuclear Mortar", description: "Massive explosions that ignore armor.", damage: 2.4, splash: 165, ignoreArmor: true },
+{ id: "rapidMortar", name: "Rapid Mortar", description: "Fires shells much faster.", damage: 1.5, rate: 2.1, range: 100, splash: 80 }
 ],
 minigun: [
-{
-id: "gatling",
-name: "Gatling Fortress",
-description: "Extreme firing speed and range.",
-damage: 1.55,
-rate: 1.9,
-range: 85
-},
-{
-id: "heavyRounds",
-name: "Heavy Rounds",
-description: "Powerful rounds pierce armored hordes.",
-damage: 2.3,
-pierce: 5,
-ignoreArmor: true
-}
+{ id: "gatling", name: "Gatling Fortress", description: "Extreme firing speed and range.", damage: 1.55, rate: 1.9, range: 85 },
+{ id: "heavyRounds", name: "Heavy Rounds", description: "Powerful rounds pierce armored hordes.", damage: 2.3, pierce: 5, ignoreArmor: true }
 ],
 acid: [
-{
-id: "corrosive",
-name: "Corrosive Reactor",
-description: "Armor-melting acid covers large groups.",
-damage: 1.7,
-poison: 30,
-splash: 105,
-curse: 0.25,
-ignoreArmor: true
-},
-{
-id: "biohazard",
-name: "Biohazard Lab",
-description: "Fast attacks spread deadly poison.",
-damage: 1.5,
-rate: 1.8,
-poison: 38,
-chain: 5
-}
+{ id: "corrosive", name: "Corrosive Reactor", description: "Armor-melting acid covers large groups.", damage: 1.7, poison: 30, splash: 105, curse: 0.25, ignoreArmor: true },
+{ id: "biohazard", name: "Biohazard Lab", description: "Fast attacks spread deadly poison.", damage: 1.5, rate: 1.8, poison: 38, chain: 5 }
 ],
 crystal: [
-{
-id: "timeCrystal",
-name: "Time Crystal",
-description: "Powerful slowing chains affect entire groups.",
-damage: 1.7,
-range: 80,
-chain: 10,
-slow: 0.28
-},
-{
-id: "prism",
-name: "Prism Cannon",
-description: "Crystal beams pierce and chain.",
-damage: 2.1,
-pierce: 8,
-chain: 7
-}
+{ id: "timeCrystal", name: "Time Crystal", description: "Powerful slowing chains affect entire groups.", damage: 1.7, range: 80, chain: 10, slow: 0.28 },
+{ id: "prism", name: "Prism Cannon", description: "Crystal beams pierce and chain.", damage: 2.1, pierce: 8, chain: 7 }
 ],
 drone: [
-{
-id: "swarm",
-name: "Drone Swarm",
-description: "A high-speed invisible-detecting attack swarm.",
-damage: 1.5,
-rate: 2,
-range: 70,
-invisibleBonus: 2
-},
-{
-id: "bomber",
-name: "Bomber Drone",
-description: "Drops powerful area explosives.",
-damage: 2.2,
-rate: 0.8,
-splash: 100,
-bossBonus: 1.5
-}
+{ id: "swarm", name: "Drone Swarm", description: "A high-speed invisible-detecting attack swarm.", damage: 1.5, rate: 2, range: 70, invisibleBonus: 2 },
+{ id: "bomber", name: "Bomber Drone", description: "Drops powerful area explosives.", damage: 2.2, rate: 0.8, splash: 100, bossBonus: 1.5 }
 ],
 saw: [
-{
-id: "shredder",
-name: "Horde Shredder",
-description: "Sawblades tear through huge lines.",
-damage: 1.9,
-rate: 1.5,
-pierce: 15
-},
-{
-id: "chainsaw",
-name: "Chainsaw Launcher",
-description: "Heavy saws ignore armor.",
-damage: 2.5,
-range: 65,
-pierce: 8,
-ignoreArmor: true
-}
+{ id: "shredder", name: "Horde Shredder", description: "Sawblades tear through huge lines.", damage: 1.9, rate: 1.5, pierce: 15 },
+{ id: "chainsaw", name: "Chainsaw Launcher", description: "Heavy saws ignore armor.", damage: 2.5, range: 65, pierce: 8, ignoreArmor: true }
 ],
 recycler: [
-{
-id: "megaRecycler",
-name: "Mega Recycler",
-description: "Produces triple income and stronger poison.",
-damage: 1.5,
-income: 3,
-poison: 18
-},
-{
-id: "scrapCannon",
-name: "Scrap Cannon",
-description: "Fires piercing scrap while producing cash.",
-damage: 2.2,
-pierce: 9,
-income: 1.8,
-range: 60
-}
+{ id: "megaRecycler", name: "Mega Recycler", description: "Produces triple income and stronger poison.", damage: 1.5, income: 3, poison: 18 },
+{ id: "scrapCannon", name: "Scrap Cannon", description: "Fires piercing scrap while producing cash.", damage: 2.2, pierce: 9, income: 1.8, range: 60 }
 ]
 };
 const abilities = {
-airStrike: {
-name: "Air Strike",
-icon: "🚀",
-cooldown: 35
-},
-blizzard: {
-name: "Blizzard",
-icon: "🌨️",
-cooldown: 30
-},
-overdrive: {
-name: "Overdrive",
-icon: "⚙️",
-cooldown: 32
-},
-supplies: {
-name: "Emergency Supplies",
-icon: "📦",
-cooldown: 45
-},
-repair: {
-name: "Base Repair",
-icon: "🛠️",
-cooldown: 40
-},
-meteor: {
-name: "Meteor",
-icon: "☄️",
-cooldown: 38
-}
+airStrike: { name: "Air Strike", icon: "🚀", cooldown: 35 },
+blizzard: { name: "Blizzard", icon: "🌨️", cooldown: 30 },
+overdrive: { name: "Overdrive", icon: "⚙️", cooldown: 32 },
+supplies: { name: "Emergency Supplies", icon: "📦", cooldown: 45 },
+repair: { name: "Base Repair", icon: "🛠️", cooldown: 40 },
+meteor: { name: "Meteor", icon: "☄️", cooldown: 38 }
 };
 const maps = [
 {
@@ -863,17 +282,7 @@ boss: "Giant Brute",
 bossColor: "#33691e",
 bossPower: "Tower Slam",
 description: "Open bends with ponds protecting valuable tower positions.",
-path: [
-[0, 320],
-[150, 190],
-[310, 315],
-[470, 480],
-[610, 325],
-[760, 110],
-[900, 300],
-[1040, 475],
-[1200, 300]
-],
+path: [[0, 320], [150, 190], [310, 315], [470, 480], [610, 325], [760, 110], [900, 300], [1040, 475], [1200, 300]],
 obstacles: [
 { x: 145, y: 410, r: 65, color: "#0288d1" },
 { x: 660, y: 170, r: 70, color: "#0288d1" },
@@ -891,17 +300,7 @@ boss: "Frost King",
 bossColor: "#0277bd",
 bossPower: "Tower Freeze",
 description: "Frozen lakes make range and careful placement important.",
-path: [
-[0, 130],
-[140, 110],
-[300, 465],
-[455, 120],
-[610, 165],
-[760, 510],
-[910, 455],
-[1050, 145],
-[1200, 250]
-],
+path: [[0, 130], [140, 110], [300, 465], [455, 120], [610, 165], [760, 510], [910, 455], [1050, 145], [1200, 250]],
 obstacles: [
 { x: 300, y: 130, r: 65, color: "#e1f5fe" },
 { x: 520, y: 430, r: 70, color: "#b3e5fc" },
@@ -919,18 +318,7 @@ boss: "Sand Worm",
 bossColor: "#8d5524",
 bossPower: "Burrow",
 description: "Canyon pits create strong long-range positions.",
-path: [
-[0, 470],
-[130, 400],
-[200, 140],
-[350, 180],
-[470, 510],
-[620, 420],
-[740, 95],
-[890, 155],
-[1030, 500],
-[1200, 365]
-],
+path: [[0, 470], [130, 400], [200, 140], [350, 180], [470, 510], [620, 420], [740, 95], [890, 155], [1030, 500], [1200, 365]],
 obstacles: [
 { x: 285, y: 370, r: 64, color: "#5d4037" },
 { x: 555, y: 155, r: 72, color: "#6d4c41" },
@@ -948,20 +336,7 @@ boss: "Magma Titan",
 bossColor: "#bf360c",
 bossPower: "Summon Minions",
 description: "Lava surrounds powerful chokepoints.",
-path: [
-[0, 250],
-[160, 90],
-[315, 130],
-[355, 300],
-[220, 505],
-[500, 515],
-[670, 350],
-[580, 215],
-[760, 65],
-[920, 165],
-[980, 445],
-[1200, 300]
-],
+path: [[0, 250], [160, 90], [315, 130], [355, 300], [220, 505], [500, 515], [670, 350], [580, 215], [760, 65], [920, 165], [980, 445], [1200, 300]],
 obstacles: [
 { x: 130, y: 420, r: 70, color: "#ff3d00" },
 { x: 485, y: 250, r: 60, color: "#ff6d00" },
@@ -979,18 +354,7 @@ boss: "Swamp Queen",
 bossColor: "#1b5e20",
 bossPower: "Sticky Fog",
 description: "Mud creates narrow tower pockets around crowded bends.",
-path: [
-[0, 390],
-[140, 500],
-[250, 110],
-[390, 205],
-[555, 515],
-[710, 360],
-[825, 75],
-[970, 225],
-[1090, 510],
-[1200, 350]
-],
+path: [[0, 390], [140, 500], [250, 110], [390, 205], [555, 515], [710, 360], [825, 75], [970, 225], [1090, 510], [1200, 350]],
 obstacles: [
 { x: 145, y: 165, r: 70, color: "#33691e" },
 { x: 500, y: 350, r: 70, color: "#4e342e" },
@@ -1008,18 +372,7 @@ boss: "Zombie General",
 bossColor: "#263238",
 bossPower: "Rally Horde",
 description: "Buildings create tactical intersections.",
-path: [
-[0, 150],
-[200, 150],
-[200, 430],
-[410, 430],
-[410, 230],
-[650, 230],
-[650, 500],
-[890, 500],
-[890, 300],
-[1200, 300]
-],
+path: [[0, 150], [200, 150], [200, 430], [410, 430], [410, 230], [650, 230], [650, 500], [890, 500], [890, 300], [1200, 300]],
 obstacles: [
 { x: 300, y: 95, w: 120, h: 150, color: "#263238" },
 { x: 510, y: 380, w: 145, h: 150, color: "#37474f" },
@@ -1038,18 +391,7 @@ boss: "Void Monster",
 bossColor: "#4a148c",
 bossPower: "Teleport",
 description: "Large craters force towers toward the map edges.",
-path: [
-[0, 310],
-[140, 80],
-[340, 90],
-[440, 295],
-[300, 540],
-[590, 500],
-[650, 85],
-[830, 130],
-[930, 520],
-[1200, 290]
-],
+path: [[0, 310], [140, 80], [340, 90], [440, 295], [300, 540], [590, 500], [650, 85], [830, 130], [930, 520], [1200, 290]],
 obstacles: [
 { x: 210, y: 420, r: 70, color: "#000" },
 { x: 540, y: 190, r: 78, color: "#000" },
@@ -1068,18 +410,7 @@ boss: "Sugar Beast",
 bossColor: "#ad1457",
 bossPower: "Candy Split",
 description: "Syrup lakes leave premium pockets near overlapping turns.",
-path: [
-[0, 260],
-[135, 165],
-[250, 390],
-[380, 270],
-[570, 145],
-[710, 325],
-[870, 515],
-[1000, 350],
-[1120, 175],
-[1200, 250]
-],
+path: [[0, 260], [135, 165], [250, 390], [380, 270], [570, 145], [710, 325], [870, 515], [1000, 350], [1120, 175], [1200, 250]],
 obstacles: [
 { x: 160, y: 410, r: 65, color: "#ec407a" },
 { x: 510, y: 420, r: 70, color: "#fff176" },
@@ -1098,18 +429,7 @@ boss: "Ancient Guardian",
 bossColor: "#558b2f",
 bossPower: "Nature Healing",
 description: "Ancient trees surround twisting temple paths.",
-path: [
-[0, 360],
-[125, 470],
-[245, 170],
-[390, 85],
-[520, 330],
-[655, 510],
-[785, 240],
-[920, 95],
-[1045, 420],
-[1200, 285]
-],
+path: [[0, 360], [125, 470], [245, 170], [390, 85], [520, 330], [655, 510], [785, 240], [920, 95], [1045, 420], [1200, 285]],
 obstacles: [
 { x: 120, y: 130, r: 70, color: "#2e7d32" },
 { x: 430, y: 455, r: 65, color: "#33691e" },
@@ -1128,18 +448,7 @@ boss: "Grave Lord",
 bossColor: "#212121",
 bossPower: "Raise the Dead",
 description: "Tombstones divide the field into narrow defense zones.",
-path: [
-[0, 170],
-[145, 255],
-[275, 510],
-[410, 380],
-[525, 100],
-[680, 165],
-[775, 480],
-[930, 390],
-[1050, 120],
-[1200, 260]
-],
+path: [[0, 170], [145, 255], [275, 510], [410, 380], [525, 100], [680, 165], [775, 480], [930, 390], [1050, 120], [1200, 260]],
 obstacles: [
 { x: 160, y: 440, w: 65, h: 100, color: "#263238" },
 { x: 385, y: 180, w: 75, h: 110, color: "#212121" },
@@ -1158,18 +467,7 @@ boss: "Leviathan",
 bossColor: "#01579b",
 bossPower: "Tidal Rush",
 description: "Small islands create valuable but limited tower space.",
-path: [
-[0, 290],
-[145, 115],
-[300, 175],
-[420, 470],
-[590, 390],
-[665, 85],
-[835, 155],
-[925, 495],
-[1065, 420],
-[1200, 250]
-],
+path: [[0, 290], [145, 115], [300, 175], [420, 470], [590, 390], [665, 85], [835, 155], [925, 495], [1065, 420], [1200, 250]],
 obstacles: [
 { x: 185, y: 430, r: 76, color: "#01579b" },
 { x: 500, y: 175, r: 70, color: "#0288d1" },
@@ -1188,18 +486,7 @@ boss: "Lunar Colossus",
 bossColor: "#455a64",
 bossPower: "Gravity Lock",
 description: "Moon craters force towers into exposed outer positions.",
-path: [
-[0, 440],
-[145, 470],
-[250, 180],
-[390, 105],
-[520, 470],
-[665, 420],
-[760, 90],
-[900, 150],
-[1030, 500],
-[1200, 330]
-],
+path: [[0, 440], [145, 470], [250, 180], [390, 105], [520, 470], [665, 420], [760, 90], [900, 150], [1030, 500], [1200, 330]],
 obstacles: [
 { x: 145, y: 190, r: 70, color: "#111" },
 { x: 430, y: 325, r: 75, color: "#111" },
@@ -1218,20 +505,7 @@ boss: "War Machine",
 bossColor: "#b71c1c",
 bossPower: "Armor Upgrade",
 description: "Machinery creates long lanes and industrial chokepoints.",
-path: [
-[0, 120],
-[220, 120],
-[220, 500],
-[420, 500],
-[420, 230],
-[635, 230],
-[635, 480],
-[845, 480],
-[845, 160],
-[1050, 160],
-[1050, 420],
-[1200, 420]
-],
+path: [[0, 120], [220, 120], [220, 500], [420, 500], [420, 230], [635, 230], [635, 480], [845, 480], [845, 160], [1050, 160], [1050, 420], [1200, 420]],
 obstacles: [
 { x: 325, y: 300, w: 120, h: 150, color: "#263238" },
 { x: 535, y: 90, w: 130, h: 120, color: "#37474f" },
@@ -1250,18 +524,7 @@ boss: "Stone Emperor",
 bossColor: "#5d4037",
 bossPower: "Stone Legion",
 description: "Broken monuments create layered defensive pockets.",
-path: [
-[0, 500],
-[145, 360],
-[275, 90],
-[410, 170],
-[515, 495],
-[675, 430],
-[770, 115],
-[930, 80],
-[1035, 390],
-[1200, 245]
-],
+path: [[0, 500], [145, 360], [275, 90], [410, 170], [515, 495], [675, 430], [770, 115], [930, 80], [1035, 390], [1200, 245]],
 obstacles: [
 { x: 150, y: 145, w: 90, h: 120, color: "#6d4c41" },
 { x: 435, y: 360, w: 100, h: 120, color: "#795548" },
@@ -1280,18 +543,7 @@ boss: "Thunder Beast",
 bossColor: "#f9a825",
 bossPower: "Lightning Surge",
 description: "Mountain peaks create dangerous overlapping bends.",
-path: [
-[0, 300],
-[130, 90],
-[285, 130],
-[385, 430],
-[530, 520],
-[665, 275],
-[770, 70],
-[930, 170],
-[1010, 495],
-[1200, 325]
-],
+path: [[0, 300], [130, 90], [285, 130], [385, 430], [530, 520], [665, 275], [770, 70], [930, 170], [1010, 495], [1200, 325]],
 obstacles: [
 { x: 130, y: 445, r: 70, color: "#37474f" },
 { x: 480, y: 180, r: 72, color: "#455a64" },
@@ -1310,18 +562,7 @@ boss: "Abyss King",
 bossColor: "#4a148c",
 bossPower: "Reality Tear",
 description: "Void rifts leave only a few safe tower positions.",
-path: [
-[0, 280],
-[150, 490],
-[290, 420],
-[370, 100],
-[540, 150],
-[625, 510],
-[790, 425],
-[870, 80],
-[1035, 170],
-[1200, 320]
-],
+path: [[0, 280], [150, 490], [290, 420], [370, 100], [540, 150], [625, 510], [790, 425], [870, 80], [1035, 170], [1200, 320]],
 obstacles: [
 { x: 170, y: 170, r: 72, color: "#000" },
 { x: 470, y: 390, r: 78, color: "#000" },
@@ -1331,36 +572,12 @@ obstacles: [
 }
 ];
 const missions = {
-noFarm: {
-name: "No Farming Allowed",
-description: "Beat wave 10 without placing a Farm.",
-reward: 40
-},
-perfectBoss: {
-name: "Untouchable",
-description: "Defeat a boss without losing base health during its wave.",
-reward: 50
-},
-wave50: {
-name: "Endless Defender",
-description: "Reach wave 50 in one run.",
-reward: 100
-},
-humanOnly: {
-name: "Human Resistance",
-description: "Beat wave 10 using only Human towers.",
-reward: 60
-},
-thousandKills: {
-name: "Zombie Hunter",
-description: "Defeat 1,000 zombies across all runs.",
-reward: 100
-},
-hardVictory: {
-name: "Hard Mode Hero",
-description: "Beat wave 10 using Hard difficulty.",
-reward: 75
-}
+noFarm: { name: "No Farming Allowed", description: "Beat wave 10 without placing a Farm.", reward: 40 },
+perfectBoss: { name: "Untouchable", description: "Defeat a boss without losing base health during its wave.", reward: 50 },
+wave50: { name: "Endless Defender", description: "Reach wave 50 in one run.", reward: 100 },
+humanOnly: { name: "Human Resistance", description: "Beat wave 10 using only Human towers.", reward: 60 },
+thousandKills: { name: "Zombie Hunter", description: "Defeat 1,000 zombies across all runs.", reward: 100 },
+hardVictory: { name: "Hard Mode Hero", description: "Beat wave 10 using Hard difficulty.", reward: 75 }
 };
 let account = {
 zombieBucks: 0,
@@ -1412,9 +629,7 @@ function cleanAccount(data = {}) {
 const owned = Array.isArray(data.ownedHumans)
 ? data.ownedHumans.filter((id) => humanTypes[id])
 : ["survivor"];
-if (!owned.includes("survivor")) {
-owned.unshift("survivor");
-}
+if (!owned.includes("survivor")) owned.unshift("survivor");
 return {
 zombieBucks: Math.max(0, Number(data.zombieBucks) || 0),
 freeTowerType:
@@ -1457,9 +672,7 @@ let saved = localStorage.getItem(SAVE_KEY);
 if (!saved) {
 for (const key of OLD_SAVE_KEYS) {
 saved = localStorage.getItem(key);
-if (saved) {
-break;
-}
+if (saved) break;
 }
 }
 if (saved) {
@@ -1474,9 +687,7 @@ saveAccount(false);
 function saveAccount(show = true) {
 localStorage.setItem(SAVE_KEY, JSON.stringify(account));
 renderLobby();
-if (show) {
-setMessage("Account saved!");
-}
+if (show) setMessage("Account saved!");
 }
 function downloadSave() {
 saveAccount(false);
@@ -1498,9 +709,7 @@ setMessage("Save file downloaded.");
 }
 function uploadSave(event) {
 const file = event.target.files[0];
-if (!file) {
-return;
-}
+if (!file) return;
 const reader = new FileReader();
 reader.onload = () => {
 try {
@@ -1530,18 +739,13 @@ function permanentCashCost() {
 return 60 + account.permanentCashLevel * 40;
 }
 function recommendedDifficulty(map) {
-if (map.recommended === "Easy") {
-return "easy";
-}
-if (map.recommended === "Hard") {
-return "hard";
-}
+if (map.recommended === "Easy") return "easy";
+if (map.recommended === "Hard") return "hard";
 return "medium";
 }
 function renderLobby() {
 document.getElementById("lobbyBucks").textContent = account.zombieBucks;
-document.getElementById("unlockedText").textContent =
-account.unlockedMapCount;
+document.getElementById("unlockedText").textContent = account.unlockedMapCount;
 document.getElementById("totalMapsText").textContent = maps.length;
 document.getElementById("freeTowerText").textContent = account.freeTowerType
 ? towerTypes[account.freeTowerType].name
@@ -1552,8 +756,7 @@ account.permanentDamageLevel * 5;
 document.getElementById("permCashText").textContent =
 permanentStartingCash();
 document.getElementById("killsText").textContent = account.totalKills;
-const human =
-humanTypes[account.equippedHuman] || humanTypes.survivor;
+const human = humanTypes[account.equippedHuman] || humanTypes.survivor;
 document.getElementById("humanText").textContent =
 human.icon + " " + human.name;
 const rollButton = document.getElementById("rollTowerButton");
@@ -1569,10 +772,8 @@ damageMetaButton.disabled = true;
 } else {
 const cost = permanentDamageCost();
 damageMetaButton.textContent =
-  "Permanent +5% Damage — " + cost + " Zombie-Bucks";
-
+"Permanent +5% Damage — " + cost + " Zombie-Bucks";
 damageMetaButton.disabled = account.zombieBucks < cost;
-
 }
 if (account.permanentCashLevel >= 10) {
 cashMetaButton.textContent = "Permanent Cash: MAXED";
@@ -1580,10 +781,8 @@ cashMetaButton.disabled = true;
 } else {
 const cost = permanentCashCost();
 cashMetaButton.textContent =
-  "Permanent +$50 Cash — " + cost + " Zombie-Bucks";
-
+"Permanent +$50 Cash — " + cost + " Zombie-Bucks";
 cashMetaButton.disabled = account.zombieBucks < cost;
-
 }
 mapGrid.innerHTML = maps
 .map((map, index) => {
@@ -1603,56 +802,32 @@ const defaultDifficulty = recommendedDifficulty(map);
       </span>
 
       <div class="difficultyDetails">
-        <div class="easyText">
-          <strong>Easy:</strong> 5 Zombie-Bucks
-        </div>
-
-        <div class="mediumText">
-          <strong>Medium:</strong> 10 Zombie-Bucks
-        </div>
-
-        <div class="hardText">
-          <strong>Hard:</strong> 20 Zombie-Bucks
-        </div>
+        <div class="easyText"><strong>Easy:</strong> 5 Zombie-Bucks</div>
+        <div class="mediumText"><strong>Medium:</strong> 10 Zombie-Bucks</div>
+        <div class="hardText"><strong>Hard:</strong> 20 Zombie-Bucks</div>
       </div>
 
-      <select data-difficulty="${index}" ${
-        unlocked ? "" : "disabled"
-      }>
+      <select data-difficulty="${index}" ${unlocked ? "" : "disabled"}>
         <option value="easy" ${
           defaultDifficulty === "easy" ? "selected" : ""
-        }>
-          Easy — 5 Zombie-Bucks
-        </option>
+        }>Easy — 5 Zombie-Bucks</option>
 
         <option value="medium" ${
           defaultDifficulty === "medium" ? "selected" : ""
-        }>
-          Medium — 10 Zombie-Bucks
-        </option>
+        }>Medium — 10 Zombie-Bucks</option>
 
         <option value="hard" ${
           defaultDifficulty === "hard" ? "selected" : ""
-        }>
-          Hard — 20 Zombie-Bucks
-        </option>
+        }>Hard — 20 Zombie-Bucks</option>
       </select>
 
-      <p>
-        ${
-          completed
-            ? "✅ Completed"
-            : unlocked
-            ? "Unlocked"
-            : "Locked"
-        }
-      </p>
+      <p>${
+        completed ? "✅ Completed" : unlocked ? "Unlocked" : "Locked"
+      }</p>
 
-      <button
-        class="green"
-        data-map="${index}"
-        ${unlocked ? "" : "disabled"}
-      >
+      <button class="green" data-map="${index}" ${
+        unlocked ? "" : "disabled"
+      }>
         ${unlocked ? "Play " + map.name : "Locked"}
       </button>
     </div>
@@ -1660,18 +835,16 @@ const defaultDifficulty = recommendedDifficulty(map);
 })
 .join("");
 
-mapGrid
-.querySelectorAll("button[data-map]")
-.forEach((button) => {
+mapGrid.querySelectorAll("button[data-map]").forEach((button) => {
 button.addEventListener("click", () => {
 const index = Number(button.dataset.map);
 const selector = mapGrid.querySelector(
 select[data-difficulty="${index}"]
 );
-    startMap(index, selector ? selector.value : "medium");
-  });
+  startMap(index, selector ? selector.value : "medium");
 });
 
+});
 }
 function renderHumans() {
 humanGrid.innerHTML = Object.entries(humanTypes)
@@ -1684,20 +857,15 @@ const equipped = account.equippedHuman === id;
       <h2>${human.name}</h2>
       <p>${human.description}</p>
 
-      <button
-        data-human="${id}"
-        ${
-          !owned && account.zombieBucks < human.cost
-            ? "disabled"
-            : ""
-        }
-      >
+      <button data-human="${id}" ${
+        !owned && account.zombieBucks < human.cost ? "disabled" : ""
+      }>
         ${
           equipped
             ? "Equipped"
             : owned
-            ? "Equip"
-            : "Buy — " + human.cost + " Zombie-Bucks"
+              ? "Equip"
+              : "Buy — " + human.cost + " Zombie-Bucks"
         }
       </button>
     </div>
@@ -1705,34 +873,30 @@ const equipped = account.equippedHuman === id;
 })
 .join("");
 
-humanGrid
-.querySelectorAll("button[data-human]")
-.forEach((button) => {
+humanGrid.querySelectorAll("button[data-human]").forEach((button) => {
 button.addEventListener("click", () => {
 const id = button.dataset.human;
 const human = humanTypes[id];
-    if (account.ownedHumans.includes(id)) {
-      account.equippedHuman = id;
-      saveAccount(false);
-      renderHumans();
-      setMessage(human.name + " equipped.");
-      return;
-    }
-
-    if (account.zombieBucks < human.cost) {
-      return;
-    }
-
-    account.zombieBucks -= human.cost;
-    account.ownedHumans.push(id);
+  if (account.ownedHumans.includes(id)) {
     account.equippedHuman = id;
-
     saveAccount(false);
     renderHumans();
-    setMessage(human.name + " purchased and equipped.");
-  });
+    setMessage(human.name + " equipped.");
+    return;
+  }
+
+  if (account.zombieBucks < human.cost) return;
+
+  account.zombieBucks -= human.cost;
+  account.ownedHumans.push(id);
+  account.equippedHuman = id;
+
+  saveAccount(false);
+  renderHumans();
+  setMessage(human.name + " purchased and equipped.");
 });
 
+});
 }
 function renderMissions() {
 missionGrid.innerHTML = Object.entries(missions)
@@ -1742,11 +906,7 @@ const completed = Boolean(account.completedMissions[id]);
     <div class="missionCard ${completed ? "completed" : ""}">
       <h3>${completed ? "✅ " : ""}${mission.name}</h3>
       <p>${mission.description}</p>
-
-      <p class="rewardText">
-        Reward: ${mission.reward} Zombie-Bucks
-      </p>
-
+      <p class="rewardText">Reward: ${mission.reward} Zombie-Bucks</p>
       <p>${completed ? "Completed" : "Not completed"}</p>
     </div>
   `;
@@ -1755,9 +915,7 @@ const completed = Boolean(account.completedMissions[id]);
 
 }
 function completeMission(id) {
-if (!missions[id] || account.completedMissions[id]) {
-return;
-}
+if (!missions[id] || account.completedMissions[id]) return;
 account.completedMissions[id] = true;
 account.zombieBucks += missions[id].reward;
 saveAccount(false);
@@ -1771,26 +929,18 @@ missions[id].reward +
 );
 }
 function rollFreeTower() {
-if (account.zombieBucks < 100 || account.freeTowerType) {
-return;
-}
-const choices = Object.keys(towerTypes).filter(
-(id) => id !== "waste"
-);
+if (account.zombieBucks < 100 || account.freeTowerType) return;
+const choices = Object.keys(towerTypes).filter((id) => id !== "waste");
 account.zombieBucks -= 100;
 account.freeTowerType =
 choices[Math.floor(Math.random() * choices.length)];
 saveAccount(false);
 setMessage(
-"You rolled a free " +
-towerTypes[account.freeTowerType].name +
-"!"
+"You rolled a free " + towerTypes[account.freeTowerType].name + "!"
 );
 }
 function buyCashBoost() {
-if (account.zombieBucks < 50) {
-return;
-}
+if (account.zombieBucks < 50) return;
 account.zombieBucks -= 50;
 account.cashBoosts++;
 saveAccount(false);
@@ -1836,113 +986,69 @@ towerBar.innerHTML = Object.entries(towerTypes)
 ([id, tower]) =>         <button data-tower="${id}">           ${tower.icon} ${tower.name} ($${tower.cost})         </button>      
 )
 .join("");
-towerBar
-.querySelectorAll("button[data-tower]")
-.forEach((button) => {
+towerBar.querySelectorAll("button[data-tower]").forEach((button) => {
 button.addEventListener("click", () => {
 beginPlacement(button.dataset.tower);
 });
 });
-controlBar.innerHTML = `
-<button id="startWaveButton" class="green">
-Start Wave
-</button>
-<button id="autoButton" class="blue">
-  Auto Start: OFF
-</button>
-
-<button id="gameSpeedButton" class="blue">
-  Speed: 1x
-</button>
-
-<button id="rewardButton" class="red">
-  Supply Drop (+$25)
-</button>
-
-<button id="lobbyButton" class="purple">
-  Back to Lobby
-</button>
-
-`;
+controlBar.innerHTML =     <button id="startWaveButton" class="green">Start Wave</button>     <button id="autoButton" class="blue">Auto Start: OFF</button>     <button id="gameSpeedButton" class="blue">Speed: 1x</button>     <button id="rewardButton" class="red">Supply Drop (+$25)</button>     <button id="lobbyButton" class="purple">Back to Lobby</button>  ;
 document
 .getElementById("startWaveButton")
 .addEventListener("click", startWave);
-document
-.getElementById("autoButton")
-.addEventListener("click", () => {
+document.getElementById("autoButton").addEventListener("click", () => {
 autoStart = !autoStart;
-  document.getElementById("autoButton").textContent =
-    "Auto Start: " + (autoStart ? "ON" : "OFF");
+document.getElementById("autoButton").textContent =
+"Auto Start: " + (autoStart ? "ON" : "OFF");
+setMessage("Auto Start " + (autoStart ? "enabled." : "disabled."));
 
-  setMessage(
-    "Auto Start " + (autoStart ? "enabled." : "disabled.")
-  );
+if (autoStart && !waveRunning) scheduleAutoStart();
 
-  if (autoStart && !waveRunning) {
-    scheduleAutoStart();
-  }
 });
-
 document
 .getElementById("gameSpeedButton")
 .addEventListener("click", () => {
 speedMultiplier = speedMultiplier === 1 ? 2 : 1;
-  document.getElementById("gameSpeedButton").textContent =
-    "Speed: " + speedMultiplier + "x";
-
+document.getElementById("gameSpeedButton").textContent =
+"Speed: " + speedMultiplier + "x";
   setMessage("Game speed set to " + speedMultiplier + "x.");
 });
 
-document
-.getElementById("rewardButton")
-.addEventListener("click", () => {
+document.getElementById("rewardButton").addEventListener("click", () => {
 const button = document.getElementById("rewardButton");
-  if (button.disabled) {
-    return;
+if (button.disabled) return;
+
+money += 25;
+button.disabled = true;
+button.textContent = "Supply Drop Cooldown";
+
+setMessage("Supply Drop delivered $25.");
+
+setTimeout(() => {
+  if (gameActive) {
+    button.disabled = false;
+    button.textContent = "Supply Drop (+$25)";
   }
+}, 120000);
 
-  money += 25;
-  button.disabled = true;
-  button.textContent = "Supply Drop Cooldown";
-
-  setMessage("Supply Drop delivered $25.");
-
-  setTimeout(() => {
-    if (gameActive) {
-      button.disabled = false;
-      button.textContent = "Supply Drop (+$25)";
-    }
-  }, 120000);
 });
-
-document
-.getElementById("lobbyButton")
-.addEventListener("click", () => {
-returnToLobby(
-"Returned to the lobby. Run progress was reset."
-);
+document.getElementById("lobbyButton").addEventListener("click", () => {
+returnToLobby("Returned to the lobby. Run progress was reset.");
 });
 abilityBar.innerHTML = Object.entries(abilities)
 .map(
 ([id, ability]) =>         <button data-ability="${id}">           ${ability.icon} ${ability.name}         </button>      
 )
 .join("");
-abilityBar
-.querySelectorAll("button[data-ability]")
-.forEach((button) => {
+abilityBar.querySelectorAll("button[data-ability]").forEach((button) => {
 button.addEventListener("click", () => {
 activateAbility(button.dataset.ability);
 });
 });
 }
 function startMap(index, difficulty = "medium") {
-if (index < 0 || index >= account.unlockedMapCount) {
-return;
-}
+if (index < 0 || index >= account.unlockedMapCount) return;
 currentMap = maps[index];
-currentDifficulty = difficulties[difficulty]
-? difficulty
-: "medium";
+currentDifficulty = difficulties[difficulty] ? difficulty : "medium";
 const settings = difficultyData();
 money = Math.floor(
 (260 + permanentStartingCash()) * settings.startingCash
@@ -1981,10 +1087,8 @@ controlBar.classList.remove("hidden");
 abilityBar.classList.remove("hidden");
 towerPanel.style.display = "none";
 bossPanel.style.display = "none";
-document.getElementById("autoButton").textContent =
-"Auto Start: OFF";
-document.getElementById("gameSpeedButton").textContent =
-"Speed: 1x";
+document.getElementById("autoButton").textContent = "Auto Start: OFF";
+document.getElementById("gameSpeedButton").textContent = "Speed: 1x";
 setMessage(
 currentMap.name +
 " selected on " +
@@ -1995,9 +1099,7 @@ settings.bucks +
 );
 updateUI();
 }
-function returnToLobby(
-text = "Choose a map and difficulty."
-) {
+function returnToLobby(text = "Choose a map and difficulty.") {
 gameActive = false;
 paused = false;
 waveRunning = false;
@@ -2020,9 +1122,7 @@ updateUI();
 }
 function beginPlacement(type) {
 const tower = towerTypes[type];
-if (!tower || !gameActive || paused) {
-return;
-}
+if (!tower || !gameActive || paused) return;
 const free = account.freeTowerType === type;
 if (!free && money < tower.cost) {
 setMessage("Not enough money.");
@@ -2037,26 +1137,16 @@ tower.name +
 ". Press Escape to cancel."
 );
 }
-function pointSegmentDistance(
-px,
-py,
-x1,
-y1,
-x2,
-y2
-) {
+function pointSegmentDistance(px, py, x1, y1, x2, y2) {
 const dx = x2 - x1;
 const dy = y2 - y1;
 const lengthSquared = dx * dx + dy * dy;
-if (lengthSquared === 0) {
-return Math.hypot(px - x1, py - y1);
-}
+if (lengthSquared === 0) return Math.hypot(px - x1, py - y1);
 const t = Math.max(
 0,
 Math.min(
 1,
-((px - x1) * dx + (py - y1) * dy) /
-lengthSquared
+((px - x1) * dx + (py - y1) * dy) / lengthSquared
 )
 );
 const x = x1 + t * dx;
@@ -2064,15 +1154,8 @@ const y = y1 + t * dy;
 return Math.hypot(px - x, py - y);
 }
 function validPlacement(x, y) {
-if (!currentMap) {
-return false;
-}
-if (
-x < 25 ||
-y < 25 ||
-x > WIDTH - 25 ||
-y > HEIGHT - 25
-) {
+if (!currentMap) return false;
+if (x < 25 || y < 25 || x > WIDTH - 25 || y > HEIGHT - 25) {
 return false;
 }
 for (let i = 0; i < currentMap.path.length - 1; i++) {
@@ -2116,9 +1199,7 @@ return !towers.some(
 function placeTower(type, x, y) {
 const base = towerTypes[type];
 const free = account.freeTowerType === type;
-if (!free && money < base.cost) {
-return;
-}
+if (!free && money < base.cost) return;
 let stats = { ...base };
 let humanType = null;
 if (type === "human") {
@@ -2192,12 +1273,8 @@ bossBuck: 0
 towers.push(tower);
 placementType = null;
 runPlacedTower = true;
-if (type === "farm") {
-runUsedFarm = true;
-}
-if (type !== "human") {
-runOnlyHumans = false;
-}
+if (type === "farm") runUsedFarm = true;
+if (type !== "human") runOnlyHumans = false;
 setMessage(tower.name + " placed.");
 updateUI();
 }
@@ -2214,8 +1291,7 @@ segments.push(length);
 total += length;
 
 }
-let distance =
-Math.max(0, Math.min(1, progress)) * total;
+let distance = Math.max(0, Math.min(1, progress)) * total;
 for (let i = 0; i < segments.length; i++) {
 if (distance <= segments[i]) {
 const ratio = distance / segments[i];
@@ -2239,9 +1315,7 @@ y: last[1]
 };
 }
 function chooseEnemyType(index) {
-if (wave < 5) {
-return "normal";
-}
+if (wave < 5) return "normal";
 if (wave >= 6 && index % 7 === 0) {
 const elite = [
 "armored",
@@ -2254,18 +1328,13 @@ const elite = [
 return elite[Math.floor(Math.random() * elite.length)];
 
 }
-if (wave >= 8 && index % 5 === 0) {
-return "tank";
-}
-if (index % 4 === 0) {
-return "fast";
-}
+if (wave >= 8 && index % 5 === 0) return "tank";
+if (index % 4 === 0) return "fast";
 return "normal";
 }
 function createEnemy(type, progress, boss = false) {
 const settings = difficultyData();
-const baseHealth =
-35 + wave * 14 + Math.pow(wave, 1.18) * 3;
+const baseHealth = 35 + wave * 14 + Math.pow(wave, 1.18) * 3;
 let healthMultiplier = 1;
 let speed = 0.042 + Math.min(0.075, wave * 0.0022);
 let radius = 17;
@@ -2325,17 +1394,9 @@ leakDamage = 45;
 }
 healthMultiplier *= settings.health;
 speed *= settings.speed;
-reward = Math.max(
-1,
-Math.round(reward * settings.cashReward)
-);
-leakDamage = Math.max(
-1,
-Math.round(leakDamage * settings.leak)
-);
-const maxHealth = Math.round(
-baseHealth * healthMultiplier
-);
+reward = Math.max(1, Math.round(reward * settings.cashReward));
+leakDamage = Math.max(1, Math.round(leakDamage * settings.leak));
+const maxHealth = Math.round(baseHealth * healthMultiplier);
 return {
 type,
 boss,
@@ -2365,9 +1426,7 @@ dead: false
 };
 }
 function startWave() {
-if (!gameActive || paused || waveRunning) {
-return;
-}
+if (!gameActive || paused || waveRunning) return;
 placementType = null;
 selectedTower = null;
 towerPanel.style.display = "none";
@@ -2375,9 +1434,7 @@ enemies = [];
 const settings = difficultyData();
 const count = Math.max(
 1,
-Math.round(
-(5 + Math.floor(wave * 1.8)) * settings.count
-)
+Math.round((5 + Math.floor(wave * 1.8)) * settings.count)
 );
 for (let i = 0; i < count; i++) {
 enemies.push(
@@ -2415,22 +1472,10 @@ count +
 updateUI();
 }
 function scheduleAutoStart() {
-if (
-!autoStart ||
-waveRunning ||
-paused ||
-!gameActive
-) {
-return;
-}
+if (!autoStart || waveRunning || paused || !gameActive) return;
 setMessage("Auto Start: next wave begins now.");
 setTimeout(() => {
-if (
-autoStart &&
-!waveRunning &&
-!paused &&
-gameActive
-) {
+if (autoStart && !waveRunning && !paused && gameActive) {
 startWave();
 }
 }, 1000);
@@ -2446,13 +1491,8 @@ return [
 ].includes(enemy.type);
 }
 function canTarget(tower, enemy) {
-if (enemy.dead || enemy.progress < 0) {
-return false;
-}
-if (
-enemy.type === "invisible" &&
-!tower.detectInvisible
-) {
+if (enemy.dead || enemy.progress < 0) return false;
+if (enemy.type === "invisible" && !tower.detectInvisible) {
 return false;
 }
 const position = getPathPosition(enemy.progress);
@@ -2464,12 +1504,8 @@ position.y - tower.y
 );
 }
 function getTarget(tower) {
-const targets = enemies.filter((enemy) =>
-canTarget(tower, enemy)
-);
-if (!targets.length) {
-return null;
-}
+const targets = enemies.filter((enemy) => canTarget(tower, enemy));
+if (!targets.length) return null;
 if (tower.targeting === "last") {
 return targets.reduce((best, enemy) =>
 enemy.progress < best.progress ? enemy : best
@@ -2495,10 +1531,8 @@ for (const other of towers) {
 if (
 other !== tower &&
 other.auraDamage > 0 &&
-Math.hypot(
-other.x - tower.x,
-other.y - tower.y
-) <= other.auraRange
+Math.hypot(other.x - tower.x, other.y - tower.y) <=
+other.auraRange
 ) {
 multiplier *= 1 + other.auraDamage;
 }
@@ -2511,10 +1545,8 @@ for (const other of towers) {
 if (
 other !== tower &&
 other.auraSpeed > 0 &&
-Math.hypot(
-other.x - tower.x,
-other.y - tower.y
-) <= other.auraRange
+Math.hypot(other.x - tower.x, other.y - tower.y) <=
+other.auraRange
 ) {
 multiplier *= 1 + other.auraSpeed;
 }
@@ -2522,29 +1554,20 @@ multiplier *= 1 + other.auraSpeed;
 return multiplier;
 }
 function damageEnemy(enemy, amount, source = {}) {
-if (enemy.dead) {
-return;
-}
+if (enemy.dead) return;
 if (enemy.shield > 0) {
 enemy.shield--;
 return;
 }
 let damage = amount * enemy.cursed;
-if (
-enemy.type === "armored" &&
-!source.ignoreArmor
-) {
+if (enemy.type === "armored" && !source.ignoreArmor) {
 damage *= 0.62;
 }
 enemy.health -= damage;
-if (enemy.health <= 0) {
-killEnemy(enemy);
-}
+if (enemy.health <= 0) killEnemy(enemy);
 }
 function killEnemy(enemy) {
-if (enemy.dead) {
-return;
-}
+if (enemy.dead) return;
 enemy.dead = true;
 money += enemy.reward;
 account.totalKills++;
@@ -2558,10 +1581,7 @@ const child = createEnemy(
 Math.max(0, enemy.progress - 0.015 * i),
 false
 );
-  child.health = Math.max(
-    10,
-    enemy.maxHealth * 0.32
-  );
+  child.health = Math.max(10, enemy.maxHealth * 0.32);
   child.maxHealth = child.health;
   child.radius = 12;
   child.reward = 5;
@@ -2587,17 +1607,10 @@ showWarning(currentMap.boss + " defeated!");
 }
 }
 function attackEnemy(tower, target) {
-let damage =
-tower.damage * towerDamageMultiplier(tower);
-if (target.boss) {
-damage *= tower.bossBonus;
-}
-if (enemyIsElite(target)) {
-damage *= tower.eliteBonus;
-}
-if (target.type === "invisible") {
-damage *= tower.invisibleBonus;
-}
+let damage = tower.damage * towerDamageMultiplier(tower);
+if (target.boss) damage *= tower.bossBonus;
+if (enemyIsElite(target)) damage *= tower.eliteBonus;
+if (target.type === "invisible") damage *= tower.invisibleBonus;
 if (
 tower.frozenBonus > 1 &&
 (target.slowUntil > gameTime ||
@@ -2611,9 +1624,7 @@ Math.random() < tower.critChance
 ) {
 damage *= tower.critDamage;
 }
-const targetPosition = getPathPosition(
-target.progress
-);
+const targetPosition = getPathPosition(target.progress);
 effects.push({
 x1: tower.x,
 y1: tower.y,
@@ -2632,9 +1643,7 @@ other.progress < 0
 ) {
 return;
 }
-  const position = getPathPosition(
-    other.progress
-  );
+  const position = getPathPosition(other.progress);
 
   if (
     Math.hypot(
@@ -2651,9 +1660,7 @@ if (tower.chain > 0) {
 let current = target;
 const hit = new Set([target]);
 for (let jump = 0; jump < tower.chain; jump++) {
-  const currentPosition = getPathPosition(
-    current.progress
-  );
+  const currentPosition = getPathPosition(current.progress);
 
   const next = enemies
     .filter(
@@ -2663,9 +1670,7 @@ for (let jump = 0; jump < tower.chain; jump++) {
         enemy.progress >= 0
     )
     .map((enemy) => {
-      const position = getPathPosition(
-        enemy.progress
-      );
+      const position = getPathPosition(enemy.progress);
 
       return {
         enemy,
@@ -2679,9 +1684,7 @@ for (let jump = 0; jump < tower.chain; jump++) {
     .filter((item) => item.distance <= 145)
     .sort((a, b) => a.distance - b.distance)[0];
 
-  if (!next) {
-    break;
-  }
+  if (!next) break;
 
   effects.push({
     x1: currentPosition.x,
@@ -2752,12 +1755,9 @@ tower.stunnedUntil > gameTime
 ) {
 return;
 }
-const rate =
-  tower.rate * towerSpeedMultiplier(tower);
+const rate = tower.rate * towerSpeedMultiplier(tower);
 
-if (gameTime - tower.lastShot < 1 / rate) {
-  return;
-}
+if (gameTime - tower.lastShot < 1 / rate) return;
 
 const target = getTarget(tower);
 
@@ -2769,14 +1769,10 @@ if (target) {
 });
 }
 function useBossPower(boss) {
-if (gameTime - boss.bossTimer < 6) {
-return;
-}
+if (gameTime - boss.bossTimer < 6) return;
 boss.bossTimer = gameTime;
 if (
-["grass", "ice", "swamp", "moon"].includes(
-currentMap.id
-)
+["grass", "ice", "swamp", "moon"].includes(currentMap.id)
 ) {
 const duration =
 currentMap.id === "moon"
@@ -2799,9 +1795,7 @@ return;
 
 }
 if (
-["desert", "space", "ocean"].includes(
-currentMap.id
-)
+["desert", "space", "ocean"].includes(currentMap.id)
 ) {
 boss.progress = Math.min(
 0.96,
@@ -2809,29 +1803,20 @@ boss.progress +
 (currentMap.id === "ocean" ? 0.09 : 0.07)
 );
 showWarning(
-  currentMap.boss.toUpperCase() +
-    " RUSHED FORWARD!"
+  currentMap.boss.toUpperCase() + " RUSHED FORWARD!"
 );
 
 return;
 
 }
 if (
-[
-"volcano",
-"graveyard",
-"ruins",
-"abyss",
-"candy"
-].includes(currentMap.id)
+["volcano", "graveyard", "ruins", "abyss", "candy"].includes(
+currentMap.id
+)
 ) {
 const types = {
 volcano: ["tank", "fast", "fast"],
-graveyard: [
-"invisible",
-"regenerator",
-"fast"
-],
+graveyard: ["invisible", "regenerator", "fast"],
 ruins: ["armored", "armored", "tank"],
 abyss: ["splitter", "invisible", "fast"],
 candy: ["splitter", "splitter"]
@@ -2850,22 +1835,17 @@ types.forEach((type, index) => {
 });
 
 showWarning(
-  currentMap.boss.toUpperCase() +
-    " SUMMONED MINIONS!"
+  currentMap.boss.toUpperCase() + " SUMMONED MINIONS!"
 );
 
 return;
 
 }
 if (
-["city", "factory", "jungle", "storm"].includes(
-currentMap.id
-)
+["city", "factory", "jungle", "storm"].includes(currentMap.id)
 ) {
 enemies.forEach((enemy) => {
-if (enemy.dead || enemy.boss) {
-return;
-}
+if (enemy.dead || enemy.boss) return;
   if (currentMap.id === "jungle") {
     enemy.health = Math.min(
       enemy.maxHealth,
@@ -2880,22 +1860,20 @@ return;
       enemy.maxHealth,
       enemy.health + enemy.maxHealth * 0.15
     );
+
     enemy.baseSpeed *= 1.05;
   }
 });
 
 showWarning(
-  currentMap.boss.toUpperCase() +
-    " BOOSTED THE HORDE!"
+  currentMap.boss.toUpperCase() + " BOOSTED THE HORDE!"
 );
 
 }
 }
 function updateEnemies(delta) {
 for (const enemy of enemies) {
-if (enemy.dead) {
-continue;
-}
+if (enemy.dead) continue;
 if (enemy.progress < 0) {
   enemy.progress += enemy.baseSpeed * delta;
   continue;
@@ -2936,18 +1914,12 @@ if (enemy.type === "healer") {
   if (enemy.healTimer >= 1) {
     enemy.healTimer = 0;
 
-    const healerPosition = getPathPosition(
-      enemy.progress
-    );
+    const healerPosition = getPathPosition(enemy.progress);
 
     enemies.forEach((other) => {
-      if (other.dead || other.progress < 0) {
-        return;
-      }
+      if (other.dead || other.progress < 0) return;
 
-      const position = getPathPosition(
-        other.progress
-      );
+      const position = getPathPosition(other.progress);
 
       if (
         Math.hypot(
@@ -2957,8 +1929,7 @@ if (enemy.type === "healer") {
       ) {
         other.health = Math.min(
           other.maxHealth,
-          other.health +
-            other.maxHealth * 0.07
+          other.health + other.maxHealth * 0.07
         );
       }
     });
@@ -2970,9 +1941,7 @@ if (enemy.boss) {
 
   bossPanel.style.display = "block";
   bossName.textContent =
-    currentMap.boss +
-    " — " +
-    currentMap.bossPower;
+    currentMap.boss + " — " + currentMap.bossPower;
 
   bossHealthFill.style.width =
     Math.max(
@@ -3031,20 +2000,14 @@ completeMission("wave50");
 }
 let text = "Wave cleared!";
 if (income > 0) {
-text +=
-" Towers produced $" +
-Math.round(income) +
-".";
+text += " Towers produced $" + Math.round(income) + ".";
 }
 if (healing > 0) {
-text +=
-" Humans restored " + healing + " health.";
+text += " Humans restored " + healing + " health.";
 }
 setMessage(text);
 updateUI();
-if (autoStart) {
-scheduleAutoStart();
-}
+if (autoStart) scheduleAutoStart();
 }
 function completeMap() {
 const settings = difficultyData();
@@ -3066,9 +2029,7 @@ unlockText =
   "!";
 
 }
-if (!runUsedFarm) {
-completeMission("noFarm");
-}
+if (!runUsedFarm) completeMission("noFarm");
 if (runOnlyHumans && runPlacedTower) {
 completeMission("humanOnly");
 }
@@ -3127,10 +2088,7 @@ function speedUpgradeCost(tower) {
 return 150 + tower.upgrades.speed * 80;
 }
 function isIncomeTower(tower) {
-return (
-tower.type === "farm" ||
-tower.type === "recycler"
-);
+return tower.type === "farm" || tower.type === "recycler";
 }
 function showTowerPanel(tower) {
 if (!tower || !towers.includes(tower)) {
@@ -3143,39 +2101,30 @@ selectedTowerName.textContent =
 tower.icon +
 " " +
 tower.name +
-(tower.evolution
-? " — " + tower.evolution.name
-: "");
-towerInfo.innerHTML =     Damage: ${Math.round(tower.damage)}<br>     Range: ${Math.round(tower.range)}<br>     Attack Speed: ${tower.rate.toFixed(2)} per second<br>     Income: $${Math.round(tower.income || 0)} per wave<br>     Targeting: ${targetingNames[tower.targeting]}<br>     Damage Level: ${tower.upgrades.damage}/5<br>     Range Level: ${tower.upgrades.range}/5<br>     Speed Level: ${tower.upgrades.speed}/5<br>     Evolution: ${       tower.evolution ? tower.evolution.name : "None"     }  ;
-targetButton.style.display = tower.nonAttacking
-? "none"
-: "block";
+(tower.evolution ? " — " + tower.evolution.name : "");
+towerInfo.innerHTML =     Damage: ${Math.round(tower.damage)}<br>     Range: ${Math.round(tower.range)}<br>     Attack Speed: ${tower.rate.toFixed(2)} per second<br>     Income: $${Math.round(tower.income || 0)} per wave<br>     Targeting: ${targetingNames[tower.targeting]}<br>     Damage Level: ${tower.upgrades.damage}/5<br>     Range Level: ${tower.upgrades.range}/5<br>     Speed Level: ${tower.upgrades.speed}/5<br>     Evolution: ${tower.evolution ? tower.evolution.name : "None"}  ;
+targetButton.style.display = tower.nonAttacking ? "none" : "block";
 targetButton.textContent =
-"Targeting: " +
-targetingNames[tower.targeting];
+"Targeting: " + targetingNames[tower.targeting];
 if (isIncomeTower(tower)) {
 damageButton.textContent =
 tower.upgrades.damage >= 5
 ? "Income: MAXED"
-: "Upgrade Income — $" +
-damageUpgradeCost(tower);
+: "Upgrade Income — $" + damageUpgradeCost(tower);
 } else {
 damageButton.textContent =
 tower.upgrades.damage >= 5
 ? "Damage: MAXED"
-: "Upgrade Damage — $" +
-damageUpgradeCost(tower);
+: "Upgrade Damage — $" + damageUpgradeCost(tower);
 }
 rangeButton.textContent =
 tower.upgrades.range >= 5
 ? "Range: MAXED"
-: "Upgrade Range — $" +
-rangeUpgradeCost(tower);
+: "Upgrade Range — $" + rangeUpgradeCost(tower);
 speedButton.textContent =
 tower.upgrades.speed >= 5
 ? "Speed: MAXED"
-: "Upgrade Speed — $" +
-speedUpgradeCost(tower);
+: "Upgrade Speed — $" + speedUpgradeCost(tower);
 damageButton.disabled =
 tower.upgrades.damage >= 5 ||
 money < damageUpgradeCost(tower) ||
@@ -3189,8 +2138,7 @@ tower.nonAttacking ||
 tower.upgrades.speed >= 5 ||
 money < speedUpgradeCost(tower);
 sellButton.textContent =
-"Sell Tower — $" +
-Math.floor(tower.spent * 0.65);
+"Sell Tower — $" + Math.floor(tower.spent * 0.65);
 if (tower.evolution) {
 evolutionArea.innerHTML =       <div class="evolutionCard">         <strong>${tower.evolution.name}</strong>         <p>${tower.evolution.description}</p>       </div>    ;
 } else if (totalUpgradeCount(tower) >= 5) {
@@ -3252,9 +2200,7 @@ tower.type === "waste"
 return;
 }
 const cost = damageUpgradeCost(tower);
-if (money < cost) {
-return;
-}
+if (money < cost) return;
 money -= cost;
 tower.spent += cost;
 tower.upgrades.damage++;
@@ -3287,9 +2233,7 @@ tower.upgrades.range >= 5
 return;
 }
 const cost = rangeUpgradeCost(tower);
-if (money < cost) {
-return;
-}
+if (money < cost) return;
 money -= cost;
 tower.spent += cost;
 tower.upgrades.range++;
@@ -3308,9 +2252,7 @@ tower.upgrades.speed >= 5
 return;
 }
 const cost = speedUpgradeCost(tower);
-if (money < cost) {
-return;
-}
+if (money < cost) return;
 money -= cost;
 tower.spent += cost;
 tower.upgrades.speed++;
@@ -3327,78 +2269,34 @@ money < EVOLUTION_COST
 ) {
 return;
 }
-const evolution =
-(evolutions[tower.type] || [])[index];
-if (!evolution) {
-return;
-}
+const evolution = (evolutions[tower.type] || [])[index];
+if (!evolution) return;
 money -= EVOLUTION_COST;
 tower.spent += EVOLUTION_COST;
 tower.evolution = evolution;
-if (evolution.damage) {
-tower.damage *= evolution.damage;
-}
-if (evolution.rate) {
-tower.rate *= evolution.rate;
-}
-if (evolution.range) {
-tower.range += evolution.range;
-}
-if (evolution.splash) {
-tower.splash += evolution.splash;
-}
-if (evolution.slow !== undefined) {
-tower.slow = evolution.slow;
-}
-if (evolution.poison) {
-tower.poison = evolution.poison;
-}
-if (evolution.burn) {
-tower.burn = evolution.burn;
-}
-if (evolution.chain) {
-tower.chain = evolution.chain;
-}
-if (evolution.pierce) {
-tower.pierce = evolution.pierce;
-}
-if (evolution.income) {
-tower.income *= evolution.income;
-}
-if (evolution.incomeFlat) {
-tower.income += evolution.incomeFlat;
-}
-if (evolution.ability) {
-tower.ability = evolution.ability;
-}
-if (evolution.bossBonus) {
-tower.bossBonus = evolution.bossBonus;
-}
-if (evolution.eliteBonus) {
-tower.eliteBonus = evolution.eliteBonus;
-}
+if (evolution.damage) tower.damage *= evolution.damage;
+if (evolution.rate) tower.rate *= evolution.rate;
+if (evolution.range) tower.range += evolution.range;
+if (evolution.splash) tower.splash += evolution.splash;
+if (evolution.slow !== undefined) tower.slow = evolution.slow;
+if (evolution.poison) tower.poison = evolution.poison;
+if (evolution.burn) tower.burn = evolution.burn;
+if (evolution.chain) tower.chain = evolution.chain;
+if (evolution.pierce) tower.pierce = evolution.pierce;
+if (evolution.income) tower.income *= evolution.income;
+if (evolution.incomeFlat) tower.income += evolution.incomeFlat;
+if (evolution.ability) tower.ability = evolution.ability;
+if (evolution.bossBonus) tower.bossBonus = evolution.bossBonus;
+if (evolution.eliteBonus) tower.eliteBonus = evolution.eliteBonus;
 if (evolution.invisibleBonus) {
-tower.invisibleBonus =
-evolution.invisibleBonus;
+tower.invisibleBonus = evolution.invisibleBonus;
 }
-if (evolution.frozenBonus) {
-tower.frozenBonus = evolution.frozenBonus;
-}
-if (evolution.critChance) {
-tower.critChance = evolution.critChance;
-}
-if (evolution.critDamage) {
-tower.critDamage = evolution.critDamage;
-}
-if (evolution.ignoreArmor) {
-tower.ignoreArmor = true;
-}
-if (evolution.curse) {
-tower.curse = evolution.curse;
-}
-if (evolution.bossBuck) {
-tower.bossBuck = evolution.bossBuck;
-}
+if (evolution.frozenBonus) tower.frozenBonus = evolution.frozenBonus;
+if (evolution.critChance) tower.critChance = evolution.critChance;
+if (evolution.critDamage) tower.critDamage = evolution.critDamage;
+if (evolution.ignoreArmor) tower.ignoreArmor = true;
+if (evolution.curse) tower.curse = evolution.curse;
+if (evolution.bossBuck) tower.bossBuck = evolution.bossBuck;
 setMessage(
 tower.name +
 " evolved into " +
@@ -3413,15 +2311,9 @@ updateUI();
 }
 function activateAbility(id) {
 const ability = abilities[id];
-if (!ability) {
-return;
-}
-if (!towers.some((tower) => tower.ability === id)) {
-return;
-}
-if ((abilityReady[id] || 0) > gameTime) {
-return;
-}
+if (!ability) return;
+if (!towers.some((tower) => tower.ability === id)) return;
+if ((abilityReady[id] || 0) > gameTime) return;
 if (id === "airStrike") {
 enemies.forEach((enemy) => {
 if (!enemy.dead && enemy.progress >= 0) {
@@ -3437,19 +2329,14 @@ setMessage("Air Strike launched!");
 }
 if (id === "blizzard") {
 enemies.forEach((enemy) => {
-if (!enemy.dead) {
-enemy.freezeUntil = gameTime + 4;
-}
+if (!enemy.dead) enemy.freezeUntil = gameTime + 4;
 });
 setMessage("Blizzard froze every enemy.");
 
 }
 if (id === "overdrive") {
 overdriveUntil = gameTime + 8;
-setMessage(
-  "Overdrive doubled tower speed for eight seconds."
-);
-
+setMessage("Overdrive doubled tower speed for eight seconds.");
 }
 if (id === "supplies") {
 money += 500;
@@ -3489,10 +2376,7 @@ moneyText.textContent = money;
 waveText.textContent = wave;
 bucksText.textContent = account.zombieBucks;
 mapText.textContent = currentMap
-? currentMap.name +
-" (" +
-difficultyData().name +
-")"
+? currentMap.name + " (" + difficultyData().name + ")"
 : "Lobby";
 healthText.textContent = Math.ceil(health);
 const percent = Math.max(
@@ -3506,34 +2390,30 @@ percent > 60
 : percent > 30
 ? "#f1c40f"
 : "#e74c3c";
-towerBar
-.querySelectorAll("button[data-tower]")
-.forEach((button) => {
+towerBar.querySelectorAll("button[data-tower]").forEach((button) => {
 const type = button.dataset.tower;
 const base = towerTypes[type];
 const free = account.freeTowerType === type;
-  button.disabled =
-    !gameActive ||
-    paused ||
-    (!free && money < base.cost);
+button.disabled =
+  !gameActive ||
+  paused ||
+  (!free && money < base.cost);
 
-  let name = base.name;
+let name = base.name;
 
-  if (type === "human") {
-    name =
-      humanTypes[account.equippedHuman].name +
-      " Human";
-  }
+if (type === "human") {
+  name =
+    humanTypes[account.equippedHuman].name + " Human";
+}
 
-  button.textContent =
-    base.icon +
-    " " +
-    name +
-    (free ? " (FREE)" : " ($" + base.cost + ")");
+button.textContent =
+  base.icon +
+  " " +
+  name +
+  (free ? " (FREE)" : " ($" + base.cost + ")");
+
 });
-
-const startButton =
-document.getElementById("startWaveButton");
+const startButton = document.getElementById("startWaveButton");
 if (startButton) {
 startButton.disabled =
 !gameActive || paused || waveRunning;
@@ -3548,9 +2428,7 @@ const id = button.dataset.ability;
 
   const remaining = Math.max(
     0,
-    Math.ceil(
-      (abilityReady[id] || 0) - gameTime
-    )
+    Math.ceil((abilityReady[id] || 0) - gameTime)
   );
 
   button.disabled =
@@ -3566,14 +2444,11 @@ const id = button.dataset.ability;
     (!unlocked
       ? " — Locked"
       : remaining > 0
-      ? " — " + remaining + "s"
-      : "");
+        ? " — " + remaining + "s"
+        : "");
 });
 
-if (
-selectedTower &&
-towers.includes(selectedTower)
-) {
+if (selectedTower && towers.includes(selectedTower)) {
 showTowerPanel(selectedTower);
 }
 }
@@ -3605,9 +2480,7 @@ canvas.addEventListener("pointermove", (event) => {
 pointer = getCanvasPoint(event);
 });
 canvas.addEventListener("pointerdown", (event) => {
-if (!gameActive || paused) {
-return;
-}
+if (!gameActive || paused) return;
 pointer = getCanvasPoint(event);
 if (placementType) {
 if (!validPlacement(pointer.x, pointer.y)) {
@@ -3628,9 +2501,7 @@ return;
 selectTowerAt(pointer.x, pointer.y);
 });
 targetButton.addEventListener("click", () => {
-if (!selectedTower) {
-return;
-}
+if (!selectedTower) return;
 const index = targetingModes.indexOf(
 selectedTower.targeting
 );
@@ -3640,22 +2511,11 @@ targetingModes[
 ];
 showTowerPanel(selectedTower);
 });
-damageButton.addEventListener(
-"click",
-upgradeDamage
-);
-rangeButton.addEventListener(
-"click",
-upgradeRange
-);
-speedButton.addEventListener(
-"click",
-upgradeSpeed
-);
+damageButton.addEventListener("click", upgradeDamage);
+rangeButton.addEventListener("click", upgradeRange);
+speedButton.addEventListener("click", upgradeSpeed);
 sellButton.addEventListener("click", () => {
-if (!selectedTower) {
-return;
-}
+if (!selectedTower) return;
 const refund = Math.floor(
 selectedTower.spent * 0.65
 );
@@ -3667,30 +2527,19 @@ setMessage("Tower sold for $" + refund + ".");
 hideTowerPanel();
 updateUI();
 });
-closeTowerButton.addEventListener(
-"click",
-hideTowerPanel
-);
+closeTowerButton.addEventListener("click", hideTowerPanel);
 continueButton.addEventListener("click", () => {
 resultOverlay.classList.remove("visible");
 paused = false;
 wave = 11;
 setMessage("Endless mode started at wave 11.");
 updateUI();
-if (autoStart) {
-scheduleAutoStart();
-}
+if (autoStart) scheduleAutoStart();
 });
-resultLobbyButton.addEventListener(
-"click",
-() => {
+resultLobbyButton.addEventListener("click", () => {
 continueButton.style.display = "inline-flex";
-returnToLobby(
-  "Choose your next map and difficulty."
-);
-
-}
-);
+returnToLobby("Choose your next map and difficulty.");
+});
 document.addEventListener("keydown", (event) => {
 if (event.key === "Escape") {
 placementType = null;
@@ -3738,18 +2587,13 @@ document
 .addEventListener("click", buyCashBoost);
 document
 .getElementById("permDamageButton")
-.addEventListener(
-"click",
-buyPermanentDamage
-);
+.addEventListener("click", buyPermanentDamage);
 document
 .getElementById("permCashButton")
 .addEventListener("click", buyPermanentCash);
 document
 .getElementById("saveButton")
-.addEventListener("click", () =>
-saveAccount(true)
-);
+.addEventListener("click", () => saveAccount(true));
 document
 .getElementById("downloadButton")
 .addEventListener("click", downloadSave);
@@ -3763,9 +2607,7 @@ ctx.fillStyle = currentMap
 ctx.fillRect(0, 0, WIDTH, HEIGHT);
 if (
 currentMap &&
-["space", "moon", "abyss"].includes(
-currentMap.id
-)
+["space", "moon", "abyss"].includes(currentMap.id)
 ) {
 ctx.fillStyle = "#fff";
 for (let i = 0; i < 65; i++) {
@@ -3795,9 +2637,7 @@ for (let i = 0; i < 8; i++) {
 }
 }
 function drawPath() {
-if (!currentMap) {
-return;
-}
+if (!currentMap) return;
 const path = currentMap.path;
 ctx.lineCap = "round";
 ctx.lineJoin = "round";
@@ -3819,9 +2659,7 @@ ctx.stroke();
 ctx.setLineDash([]);
 }
 function drawObstacles() {
-if (!currentMap) {
-return;
-}
+if (!currentMap) return;
 currentMap.obstacles.forEach((object) => {
 ctx.fillStyle = object.color;
 ctx.strokeStyle = "#0006";
@@ -3915,9 +2753,7 @@ if (tower.stunnedUntil > gameTime) {
 });
 }
 function enemyLabel(enemy) {
-if (enemy.boss) {
-return "BOSS";
-}
+if (enemy.boss) return "BOSS";
 return (
 {
 fast: "F",
@@ -3933,12 +2769,8 @@ splitter: "2"
 }
 function drawEnemies() {
 enemies.forEach((enemy) => {
-if (enemy.dead || enemy.progress < 0) {
-return;
-}
-const position = getPathPosition(
-  enemy.progress
-);
+if (enemy.dead || enemy.progress < 0) return;
+const position = getPathPosition(enemy.progress);
 
 ctx.save();
 
@@ -4017,8 +2849,8 @@ ctx.fillStyle =
   healthPercent > 0.6
     ? "#2ecc71"
     : healthPercent > 0.3
-    ? "#f1c40f"
-    : "#e74c3c";
+      ? "#f1c40f"
+      : "#e74c3c";
 
 ctx.fillRect(
   position.x - width / 2,
@@ -4061,9 +2893,7 @@ ctx.stroke();
 });
 }
 function drawPlacement() {
-if (!placementType) {
-return;
-}
+if (!placementType) return;
 const tower = towerTypes[placementType];
 const valid = validPlacement(
 pointer.x,
