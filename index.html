@@ -3,21 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta
-    name="description"
-    content="Zombie Defense V5: Boss Invasion — a solo and cooperative tower defense game."
->
-
 <title>Zombie Defense V5: Boss Invasion</title>
 
 <link rel="stylesheet" href="style.css">
-
-<script
-    src="https://cdn.socket.io/4.8.1/socket.io.min.js"
-    defer
-></script>
-
-<script src="index.js" defer></script>
 
 </head>
 <body>
@@ -45,14 +33,6 @@
         </div>
     </div>
 
-    <div id="connectionBox" class="stat">
-        Server: <span id="connectionText">Offline</span>
-    </div>
-
-    <div id="roomBox" class="stat hidden">
-        Room: <span id="activeRoomText">None</span>
-    </div>
-
     <div id="message">
         Choose a map and difficulty to begin.
     </div>
@@ -65,12 +45,7 @@
 <div id="abilityBar" class="hidden"></div>
 
 <div id="gameWrap">
-    <canvas
-        id="gameCanvas"
-        width="1200"
-        height="600"
-        aria-label="Zombie Defense game"
-    ></canvas>
+    <canvas id="gameCanvas" width="1200" height="600"></canvas>
 
     <div id="bossPanel">
         <div id="bossName">Boss</div>
@@ -137,7 +112,7 @@
     <h1>Zombie Defense V5: Boss Invasion</h1>
 
     <p class="overlayIntro">
-        Defeat bosses, evolve towers, choose your difficulty, complete permanent missions, and defend together in co-op.
+        Defeat bosses, evolve towers, choose your difficulty, and complete permanent missions.
     </p>
 
     <div id="lobbyStats">
@@ -178,14 +153,6 @@
             <div class="lobbyStat">
                 Total Eliminations: <span id="killsText">0</span>
             </div>
-
-            <div class="lobbyStat">
-                Game Mode: <span id="modeText">Solo</span>
-            </div>
-
-            <div class="lobbyStat">
-                Co-op Players: <span id="playerCountText">1 / 2</span>
-            </div>
         </div>
 
         <div id="lobbyButtons">
@@ -195,6 +162,10 @@
 
             <button id="missionsButton" class="blue">
                 Missions
+            </button>
+
+            <button id="coopButton" class="green">
+                Co-op
             </button>
 
             <button id="rollTowerButton">
@@ -227,92 +198,9 @@
                 <input
                     id="saveUpload"
                     type="file"
-                    accept=".json,application/json"
+                    accept=".json"
                 >
             </label>
-        </div>
-    </div>
-
-    <div id="coopPanel">
-        <h2 class="sectionTitle">Co-op</h2>
-
-        <p class="overlayIntro">
-            Create a private room or join another player's room using their room code.
-        </p>
-
-        <div id="coopControls">
-            <label class="coopField">
-                <span>Player Name</span>
-
-                <input
-                    id="playerNameInput"
-                    type="text"
-                    maxlength="20"
-                    autocomplete="nickname"
-                    placeholder="Enter your name"
-                >
-            </label>
-
-            <button id="createRoomButton" class="green">
-                Create Co-op Room
-            </button>
-
-            <label class="coopField">
-                <span>Room Code</span>
-
-                <input
-                    id="roomCodeInput"
-                    type="text"
-                    maxlength="8"
-                    autocomplete="off"
-                    autocapitalize="characters"
-                    spellcheck="false"
-                    placeholder="Enter room code"
-                >
-            </label>
-
-            <button id="joinRoomButton" class="blue">
-                Join Co-op Room
-            </button>
-        </div>
-
-        <div id="activeRoomPanel" class="hidden">
-            <div class="panelInfo">
-                <p>
-                    Room Code:
-                    <strong id="roomCodeText">None</strong>
-                </p>
-
-                <p>
-                    Host:
-                    <span id="roomHostText">Waiting</span>
-                </p>
-
-                <p>
-                    Players:
-                    <span id="roomPlayerCountText">0 / 2</span>
-                </p>
-
-                <p id="roomStatusText">
-                    Waiting for players.
-                </p>
-            </div>
-
-            <div id="coopPlayerList"></div>
-
-            <div id="coopRoomButtons">
-                <button id="copyRoomCodeButton" class="blue">
-                    Copy Room Code
-                </button>
-
-                <button id="readyButton" class="green">
-                    Ready
-                </button>
-
-                <button id="leaveRoomButton" class="red">
-                    Leave Room
-                </button>
-            </div>
         </div>
     </div>
 
@@ -350,6 +238,121 @@
         Back to Lobby
     </button>
 </div>
+
+<div id="coopMenu" class="overlay">
+    <h1>Co-op</h1>
+
+    <p class="overlayIntro">
+        Create a private room or join another player's room.
+    </p>
+
+    <div class="cardGrid">
+        <div class="mapCard">
+            <h2>Create Room</h2>
+
+            <p>
+                Create a new co-op room and share the room code with another player.
+            </p>
+
+            <label for="createPlayerName">
+                Player Name
+            </label>
+
+            <input
+                id="createPlayerName"
+                class="coopInput"
+                type="text"
+                maxlength="20"
+                autocomplete="nickname"
+                placeholder="Enter your name"
+            >
+
+            <button id="createRoomButton" class="green">
+                Create Room
+            </button>
+        </div>
+
+        <div class="mapCard">
+            <h2>Join Room</h2>
+
+            <p>
+                Enter the room code given to you by the room host.
+            </p>
+
+            <label for="joinPlayerName">
+                Player Name
+            </label>
+
+            <input
+                id="joinPlayerName"
+                class="coopInput"
+                type="text"
+                maxlength="20"
+                autocomplete="nickname"
+                placeholder="Enter your name"
+            >
+
+            <label for="roomCodeInput">
+                Room Code
+            </label>
+
+            <input
+                id="roomCodeInput"
+                class="coopInput"
+                type="text"
+                maxlength="8"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                placeholder="Enter room code"
+            >
+
+            <button id="joinRoomButton" class="blue">
+                Join Room
+            </button>
+        </div>
+    </div>
+
+    <div id="coopRoomPanel" class="mapCard hidden">
+        <h2>Co-op Room</h2>
+
+        <p>
+            Room Code:
+            <strong id="roomCodeText">None</strong>
+        </p>
+
+        <p>
+            Status:
+            <span id="coopStatusText">Not connected</span>
+        </p>
+
+        <p>
+            Players:
+            <span id="coopPlayerCountText">0 / 2</span>
+        </p>
+
+        <div id="coopPlayerList"></div>
+
+        <button id="copyRoomCodeButton" class="blue">
+            Copy Room Code
+        </button>
+
+        <button id="coopReadyButton" class="green">
+            Ready
+        </button>
+
+        <button id="leaveRoomButton" class="red">
+            Leave Room
+        </button>
+    </div>
+
+    <button id="closeCoopMenu" class="purple">
+        Back to Lobby
+    </button>
+</div>
+
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+<script src="index.js"></script>
 
 </body>
 </html>
