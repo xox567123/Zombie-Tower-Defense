@@ -2696,90 +2696,56 @@ towerBar.querySelectorAll("button[data-tower]").forEach(button => {
 });
 
 controlBar.innerHTML = `
-    <button id="startWaveButton" class="green">
-        Start Wave
-    </button>
-
-    <button id="autoButton" class="blue">
-        Auto Start: OFF
-    </button>
-
-    <button id="gameSpeedButton" class="blue">
-        Speed: 1x
-    </button>
-
-    <button id="rewardButton" class="red">
-        Supply Drop (+$25)
-    </button>
-
-    <button id="lobbyButton" class="purple">
-        Back to Lobby
-    </button>
+    <button id="startWaveButton" class="green">Start Wave</button>
+    <button id="autoButton" class="blue">Auto Start: OFF</button>
+    <button id="gameSpeedButton" class="blue">Speed: 1x</button>
+    <button id="rewardButton" class="red">Supply Drop (+$25)</button>
+    <button id="lobbyButton" class="purple">Back to Lobby</button>
 `;
 
-document.getElementById("startWaveButton")
-    .addEventListener("click", startWave);
+document.getElementById("startWaveButton").addEventListener("click", startWave);
 
-document.getElementById("autoButton")
-    .addEventListener("click", () => {
-        autoStart = !autoStart;
+document.getElementById("autoButton").addEventListener("click", () => {
+    autoStart = !autoStart;
+    document.getElementById("autoButton").textContent =
+        "Auto Start: " + (autoStart ? "ON" : "OFF");
 
-        document.getElementById("autoButton").textContent =
-            "Auto Start: " +
-            (autoStart ? "ON" : "OFF");
+    setMessage("Auto Start " + (autoStart ? "enabled." : "disabled."));
 
-        setMessage(
-            "Auto Start " +
-            (autoStart ? "enabled." : "disabled.")
-        );
+    if(autoStart && !waveRunning){
+        scheduleAutoStart();
+    }
+});
 
-        if(autoStart && !waveRunning){
-            scheduleAutoStart();
+document.getElementById("gameSpeedButton").addEventListener("click", () => {
+    speedMultiplier = speedMultiplier === 1 ? 2 : 1;
+    document.getElementById("gameSpeedButton").textContent =
+        "Speed: " + speedMultiplier + "x";
+
+    setMessage("Game speed set to " + speedMultiplier + "x.");
+});
+
+document.getElementById("rewardButton").addEventListener("click", () => {
+    const button = document.getElementById("rewardButton");
+
+    if(button.disabled) return;
+
+    money += 25;
+    button.disabled = true;
+    button.textContent = "Supply Drop Cooldown";
+    setMessage("Supply Drop delivered $25.");
+
+    setTimeout(() => {
+        if(gameActive){
+            button.disabled = false;
+            button.textContent = "Supply Drop (+$25)";
         }
-    });
+    }, 120000);
+});
 
-document.getElementById("gameSpeedButton")
-    .addEventListener("click", () => {
-        speedMultiplier = speedMultiplier === 1 ? 2 : 1;
-
-        document.getElementById("gameSpeedButton").textContent =
-            "Speed: " +
-            speedMultiplier +
-            "x";
-
-        setMessage(
-            "Game speed set to " +
-            speedMultiplier +
-            "x."
-        );
-    });
-
-document.getElementById("rewardButton")
-    .addEventListener("click", () => {
-        const button = document.getElementById("rewardButton");
-
-        if(button.disabled) return;
-
-        money += 25;
-        button.disabled = true;
-        button.textContent = "Supply Drop Cooldown";
-
-        setMessage("Supply Drop delivered $25.");
-
-        setTimeout(() => {
-            if(gameActive){
-                button.disabled = false;
-                button.textContent = "Supply Drop (+$25)";
-            }
-        }, 120000);
-    });
-
-document.getElementById("lobbyButton")
-    .addEventListener("click", () => {
-        returnToLobby(
-            "Returned to the lobby. Run progress was reset."
-        );
-    });
+document.getElementById("lobbyButton").addEventListener("click", () => {
+    returnToLobby("Returned to the lobby. Run progress was reset.");
+});
 
 abilityBar.innerHTML = Object.entries(abilities)
     .map(([id, ability]) => {
