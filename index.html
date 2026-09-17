@@ -800,4 +800,1437 @@ button:disabled{
 }
 
 
-@media(max-width:760px){ #towerPanel{position:fixed;left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:55vh} .mapCard,.humanCard,.missionCard{width:94vw} .overlay h1{font-size:30px} #towerBar button,#controlBar button,#abilityBar button{font-size:12px;padding:7px 8px} } </style></head> <body> <div id="ui"> <div class="stat">Money: $<span id="moneyText">260</span></div> <div class="stat">Wave: <span id="waveText">1</span></div> <div class="stat">Zombie-Bucks: <span id="bucksText">0</span></div> <div class="stat">Map: <span id="mapText">Lobby</span></div> <div id="healthBox" class="stat"> Health: <span id="healthText">150</span> <div id="healthBar"><div id="healthFill"></div></div> </div> <div id="message">Choose a map and difficulty to begin.</div> </div> <div id="towerBar" class="hidden"></div> <div id="controlBar" class="hidden"></div> <div id="abilityBar" class="hidden"></div> <div id="gameWrap"> <canvas id="gameCanvas" width="1200" height="600"></canvas> <div id="bossPanel"> <div id="bossName">Boss</div> <div id="bossHealthBar"><div id="bossHealthFill"></div></div> </div> <div id="warning"></div> <div id="towerPanel"> <h2 id="selectedTowerName">Tower</h2> <div id="towerInfo" class="panelInfo"></div> <button id="targetButton" class="purple">Targeting: First</button> <button id="damageButton">Upgrade Damage</button> <button id="rangeButton">Upgrade Range</button> <button id="speedButton">Upgrade Speed</button> <div id="evolutionArea"></div> <button id="sellButton" class="red">Sell Tower</button> <button id="closeTowerButton" class="dark">Close</button> </div> <div id="resultOverlay"> <div id="resultCard"> <h1 id="resultTitle">Map Complete!</h1> <p id="resultText"></p> <div id="resultButtons"> <button id="continueButton" class="green">Keep Playing</button> <button id="resultLobbyButton" class="purple">Back to Lobby</button> </div> </div> </div> </div> <div id="lobby" class="overlay visible"> <h1>Zombie Defense V5: Boss Invasion</h1> <p class="overlayIntro">Defeat bosses, evolve towers, choose your difficulty, and complete permanent missions.</p> <div id="lobbyStats"> <div id="statGrid"> <div class="lobbyStat">Zombie-Bucks: <span id="lobbyBucks">0</span></div> <div class="lobbyStat">Unlocked Maps: <span id="unlockedText">1</span> / <span id="totalMapsText">16</span></div> <div class="lobbyStat">Human: <span id="humanText">🧑 Survivor</span></div> <div class="lobbyStat">Free Tower: <span id="freeTowerText">None</span></div> <div class="lobbyStat">Cash Boosts: <span id="cashBoostText">0</span></div> <div class="lobbyStat">Permanent Damage: +<span id="permDamageText">0</span>%</div> <div class="lobbyStat">Permanent Cash: +$<span id="permCashText">0</span></div> <div class="lobbyStat">Total Eliminations: <span id="killsText">0</span></div> </div> <div id="lobbyButtons"> <button id="humanShopButton" class="purple">Humans Shop</button> <button id="missionsButton" class="blue">Missions</button> <button id="rollTowerButton">Roll Free Tower — 100 Zombie-Bucks</button> <button id="cashBoostButton">Buy +$150 Next Run — 50 Zombie-Bucks</button> <button id="permDamageButton">Permanent Damage</button> <button id="permCashButton">Permanent Cash</button> <button id="saveButton" class="dark">Save Account</button> <button id="downloadButton" class="dark">Download Save</button> <label class="fileButton"> Upload Save <input id="saveUpload" type="file" accept=".json"> </label> </div> </div> <h2 class="sectionTitle">Choose a Map and Difficulty</h2> <div id="mapGrid" class="cardGrid"></div> </div> <div id="humanShop" class="overlay"> <h1>Humans Shop</h1> <p class="overlayIntro">Purchase humans permanently and equip one for your Human towers.</p> <div id="humanGrid" class="cardGrid"></div> <button id="closeHumanShop" class="purple">Back to Lobby</button> </div> <div id="missionsPage" class="overlay"> <h1>Missions</h1> <p class="overlayIntro">Rewards are given automatically when each mission is completed.</p> <div id="missionGrid" class="cardGrid"></div> <button id="closeMissions" class="purple">Back to Lobby</button> </div> <script> "use strict"; const canvas=document.getElementById("gameCanvas"); const ctx=canvas.getContext("2d"); const moneyText=document.getElementById("moneyText"); const waveText=document.getElementById("waveText"); const bucksText=document.getElementById("bucksText"); const mapText=document.getElementById("mapText"); const healthText=document.getElementById("healthText"); const healthFill=document.getElementById("healthFill"); const message=document.getElementById("message"); const towerBar=document.getElementById("towerBar"); const controlBar=document.getElementById("controlBar"); const abilityBar=document.getElementById("abilityBar"); const lobby=document.getElementById("lobby"); const humanShop=document.getElementById("humanShop"); const missionsPage=document.getElementById("missionsPage"); const mapGrid=document.getElementById("mapGrid"); const humanGrid=document.getElementById("humanGrid"); const missionGrid=document.getElementById("missionGrid"); const bossPanel=document.getElementById("bossPanel"); const bossName=document.getElementById("bossName"); const bossHealthFill=document.getElementById("bossHealthFill"); const warning=document.getElementById("warning"); const towerPanel=document.getElementById("towerPanel"); const selectedTowerName=document.getElementById("selectedTowerName"); const towerInfo=document.getElementById("towerInfo"); const evolutionArea=document.getElementById("evolutionArea"); const targetButton=document.getElementById("targetButton"); const damageButton=document.getElementById("damageButton"); const rangeButton=document.getElementById("rangeButton"); const speedButton=document.getElementById("speedButton"); const sellButton=document.getElementById("sellButton"); const closeTowerButton=document.getElementById("closeTowerButton"); const resultOverlay=document.getElementById("resultOverlay"); const resultTitle=document.getElementById("resultTitle"); const resultText=document.getElementById("resultText"); const continueButton=document.getElementById("continueButton"); const resultLobbyButton=document.getElementById("resultLobbyButton"); const WIDTH=1200; const HEIGHT=600; const MAX_HEALTH=150; const SAVE_KEY="zombieDefenseV5BossInvasionExpanded"; const EVOLUTION_COST=1000; const OLD_SAVE_KEYS=[ "zombieDefenseV4Fixed", "zombieDefenseAccountSaveV6", "zombieDefenseAccountSaveV5", "zombieDefenseAccountSaveV4", "zombieDefenseAccountSaveV3", "zombieDefenseAccountSaveV2" ]; const targetingModes=["first","last","strong","weak"]; const targetingNames={ first:"First", last:"Last", strong:"Most Health", weak:"Least Health" }; const difficulties={ easy:{ name:"Easy", bucks:5, health:0.8, speed:0.9, count:0.9, leak:0.75, cashReward:0.9, startingCash:1.15 }, medium:{ name:"Medium", bucks:10, health:1, speed:1, count:1, leak:1, cashReward:1, startingCash:1 }, hard:{ name:"Hard", bucks:20, health:1.55, speed:1.18, count:1.3, leak:1.5, cashReward:1.25, startingCash:0.85 } }; const humanTypes={ survivor:{ name:"Survivor", icon:"🧑", cost:0, description:"Balanced damage, range, and attack speed.", damage:38, range:170, rate:2.5 }, medic:{ name:"Medic", icon:"🧑‍⚕️", cost:75, description:"Restores 3 base health after every cleared wave.", damage:22, range:160, rate:2, heal:3 }, engineer:{ name:"Engineer", icon:"👷", cost:110, description:"Boosts nearby tower damage by 15%.", damage:27, range:165, rate:2.2, auraDamage:.15, auraRange:155 }, pyro:{ name:"Pyro", icon:"🧑‍🚒", cost:150, description:"Burns zombies and deals splash damage.", damage:31, range:155, rate:1.9, splash:45, burn:9 }, commander:{ name:"Commander", icon:"🪖", cost:220, description:"Boosts nearby attack speed and earns $20 each wave.", damage:45, range:185, rate:2.1, auraSpeed:.15, auraRange:175, income:20 } }; const towerTypes={ ranger:{name:"Ranger",icon:"🏹",cost:180,color:"#2e7d32",damage:35,range:155,rate:2.5}, mage:{name:"Mage",icon:"🔮",cost:230,color:"#7e57c2",damage:48,range:165,rate:1.65,splash:40}, cannon:{name:"Cannon",icon:"💣",cost:280,color:"#455a64",damage:80,range:140,rate:1.15,splash:60}, ice:{name:"ICE",icon:"(-)",cost:200,color:"#039be5",damage:1,range:175,rate:10,slow:10}, sniper:{name:"Sniper",icon:"🎯",cost:300,color:"#6d4c41",damage:75,range:900,rate:0.25,detectInvisible:true}, ninja:{name:"Ninja",icon:"🥷",cost:400,color:"#212121",damage:28,range:245,rate:3.5,detectInvisible:true}, laser:{name:"Laser",icon:"🔴",cost:480,color:"#c62828",damage:30,range:190,rate:2.8,pierce:5}, poison:{name:"Poison",icon:"☠️",cost:240,color:"#689f38",damage:18,range:155,rate:1.9,poison:8}, glue:{name:"Glue",icon:"🍯",cost:600,color:"#fbc02d",damage:3,range:180,rate:2.2,slow:.35}, farm:{name:"Farm",icon:"💰",cost:700,color:"#ffb300",damage:0,range:0,rate:0,income:55,nonAttacking:true}, fire:{name:"Fire",icon:"🔥",cost:300,color:"#e65100",damage:34,range:160,rate:1.9,splash:45,burn:10}, lightning:{name:"Lightning",icon:"⚡",cost:360,color:"#fdd835",damage:42,range:190,rate:1.5,chain:3}, boomerang:{name:"Boomerang",icon:"🪃",cost:220,color:"#ef6c00",damage:28,range:180,rate:2.8,pierce:3}, human:{name:"Human",icon:"🧑",cost:250,color:"#8d6e63",damage:38,range:170,rate:2.5}, waste:{name:"Waste Your Money",icon:"💸",cost:2500,color:"#7f0000",damage:50,range:1000,rate:1000}, shotgun:{name:"Shotgunner",icon:"🔫",cost:270,color:"#795548",damage:30,range:135,rate:1.55,pierce:5,splash:30}, mortar:{name:"Mortar",icon:"🧨",cost:420,color:"#37474f",damage:115,range:330,rate:.72,splash:105}, minigun:{name:"Minigun",icon:"⚙️",cost:680,color:"#546e7a",damage:20,range:155,rate:5.6}, acid:{name:"Acid",icon:"🧪",cost:310,color:"#8bc34a",damage:20,range:170,rate:2.1,poison:13,splash:35}, crystal:{name:"Jeweler",icon:"💎",cost:390,color:"#00bcd4",damage:30,range:240,rate:1.3,chain:3,slow:.25}, drone:{name:"Drone",icon:"🛸",cost:350,color:"#5c6bc0",damage:38,range:285,rate:3,detectInvisible:true}, saw:{name:"Sawblade",icon:"🪚",cost:330,color:"#9e9e9e",damage:42,range:175,rate:2.4,pierce:6}, recycler:{name:"Recycler",icon:"♻️",cost:540,color:"#00897b",damage:27,range:165,rate:1.8,poison:5,income:32} }; const evolutions={ ranger:[ {id:"machine",name:"Machine Gunner",description:"Doubles attack speed and unlocks Overdrive.",damage:1.3,rate:2,range:25,ability:"overdrive"}, {id:"archer",name:"Elite Archer",description:"Heavy damage, range, and piercing arrows.",damage:2,rate:.85,range:100,pierce:8} ], mage:[ {id:"storm",name:"Storm Wizard",description:"Chains attacks and unlocks Blizzard.",damage:1.5,range:50,chain:6,ability:"blizzard"}, {id:"necromancer",name:"Necromancer",description:"Curses enemies so they take more damage.",damage:1.45,range:60,curse:.3} ], cannon:[ {id:"missile",name:"Missile Launcher",description:"Extreme range and unlocks Air Strike.",damage:1.8,range:180,splash:60,ability:"airStrike"}, {id:"artillery",name:"Heavy Artillery",description:"Slow, devastating attacks with a massive blast.",damage:3,rate:.55,range:75,splash:120} ], ice:[ {id:"blizzard",name:"Blizzard Tower",description:"Freezes groups and unlocks Blizzard.",damage:1.6,range:75,splash:90,slow:.2,ability:"blizzard"}, {id:"deepFreeze",name:"Deep Freeze",description:"Almost stops enemies and hurts slowed targets.",damage:2,range:50,slow:.1,frozenBonus:2} ], sniper:[ {id:"deadeye",name:"Deadeye",description:"Deals massive damage to bosses and elites.",damage:2.1,bossBonus:2,eliteBonus:2}, {id:"railgun",name:"Railgunner",description:"Shots pierce up to ten zombies.",damage:1.7,rate:1.15,pierce:10} ], ninja:[ {id:"shadow",name:"Shadow Master",description:"Very fast attacks with invisible bonus damage.",damage:1.6,rate:1.8,invisibleBonus:2}, {id:"assassin",name:"Assassin",description:"Has a chance to deal triple damage.",damage:1.8,critChance:.25,critDamage:3} ], laser:[ {id:"plasma",name:"Plasma Beam",description:"Ignores armor and pierces many enemies.",damage:1.8,range:80,pierce:12,ignoreArmor:true}, {id:"deathRay",name:"Death Ray",description:"Massive damage against bosses.",damage:2.2,range:50,bossBonus:1.8} ], poison:[ {id:"toxic",name:"Toxic Cloud",description:"Powerful poison spreads through a large area.",damage:1.5,range:60,splash:100,poison:20}, {id:"plague",name:"Plague Doctor",description:"Poison ignores armor and weakens enemies.",damage:1.7,range:70,poison:28,curse:.2,ignoreArmor:true} ], glue:[ {id:"superGlue",name:"Super Glue",description:"Almost completely stops enemies.",damage:5,range:80,slow:.08,curse:.2}, {id:"glueStorm",name:"Glue Storm",description:"Covers large groups in glue.",damage:3,range:120,splash:140,slow:.2} ], farm:[ {id:"megaFarm",name:"Mega Farm",description:"Triples income and unlocks Emergency Supplies.",income:3,ability:"supplies"}, {id:"buckFactory",name:"Zombie-Bucks Factory",description:"Doubles income and earns a Buck after bosses.",income:2,bossBuck:1} ], fire:[ {id:"inferno",name:"Inferno",description:"Massive burn damage and unlocks Meteor.",damage:1.8,range:60,splash:90,burn:28,ability:"meteor"}, {id:"flamethrower",name:"Flamethrower",description:"Rapid attacks that burn groups.",damage:1.3,rate:2.2,range:40,splash:55,burn:18} ], lightning:[ {id:"thunder",name:"Thunder God",description:"Chains through up to twelve enemies.",damage:2,range:80,chain:12}, {id:"tesla",name:"Tesla Coil",description:"Extremely fast chain lightning.",damage:1.5,rate:2,range:50,chain:7} ], boomerang:[ {id:"glaive",name:"Glaive Master",description:"Pierces up to twelve zombies.",damage:2,range:60,pierce:12}, {id:"ricochet",name:"Ricochet Master",description:"Rapidly bounces between enemies.",damage:1.6,rate:1.6,range:70,chain:8} ], human:[ {id:"guardian",name:"Guardian",description:"Powerful defender that unlocks Base Repair.",damage:1.7,range:60,ability:"repair"}, {id:"hero",name:"Hero",description:"Critical hits and extra boss damage.",damage:2.2,range:70,critChance:.2,critDamage:2.5,bossBonus:1.6} ], waste:[ {id:"goldTrash",name:"Golden Trash",description:"It now produces one dollar per wave.",incomeFlat:1}, {id:"badInvestment",name:"Terrible Investment",description:"Still does absolutely nothing."} ], shotgun:[ {id:"breacher",name:"Zombie Breacher",description:"Fires huge piercing blasts.",damage:2.1,range:45,pierce:12,splash:55}, {id:"autoShotgun",name:"Auto Shotgun",description:"Rapidly fires wide shotgun bursts.",damage:1.45,rate:2.2,pierce:8,splash:45} ], mortar:[ {id:"nuclear",name:"Nuclear Mortar",description:"Massive explosions that ignore armor.",damage:2.4,splash:165,ignoreArmor:true}, {id:"rapidMortar",name:"Rapid Mortar",description:"Fires shells much faster.",damage:1.5,rate:2.1,range:100,splash:80} ], minigun:[ {id:"gatling",name:"Gatling Fortress",description:"Extreme firing speed and range.",damage:1.55,rate:1.9,range:85}, {id:"heavyRounds",name:"Heavy Rounds",description:"Powerful rounds pierce armored hordes.",damage:2.3,pierce:5,ignoreArmor:true} ], acid:[ {id:"corrosive",name:"Corrosive Reactor",description:"Armor-melting acid covers large groups.",damage:1.7,poison:30,splash:105,curse:.25,ignoreArmor:true}, {id:"biohazard",name:"Biohazard Lab",description:"Fast attacks spread deadly poison.",damage:1.5,rate:1.8,poison:38,chain:5} ], crystal:[ {id:"timeCrystal",name:"Time Crystal",description:"Powerful slowing chains affect entire groups.",damage:1.7,range:80,chain:10,slow:.28}, {id:"prism",name:"Prism Cannon",description:"Crystal beams pierce and chain.",damage:2.1,pierce:8,chain:7} ], drone:[ {id:"swarm",name:"Drone Swarm",description:"A high-speed invisible-detecting attack swarm.",damage:1.5,rate:2,range:70,invisibleBonus:2}, {id:"bomber",name:"Bomber Drone",description:"Drops powerful area explosives.",damage:2.2,rate:.8,splash:100,bossBonus:1.5} ], saw:[ {id:"shredder",name:"Horde Shredder",description:"Sawblades tear through huge lines.",damage:1.9,rate:1.5,pierce:15}, {id:"chainsaw",name:"Chainsaw Launcher",description:"Heavy saws ignore armor.",damage:2.5,range:65,pierce:8,ignoreArmor:true} ], recycler:[ {id:"megaRecycler",name:"Mega Recycler",description:"Trades dmg and posion for more money",damage:0.5,income:10,poison:15}, {id:"scrapCannon",name:"Scrap Cannon",description:"Fires piercing scrap while producing cash.",damage:2.2,pierce:9,income:1.8,range:60} ] }; const abilities={ airStrike:{name:"Air Strike",icon:"🚀",cooldown:35}, blizzard:{name:"Blizzard",icon:"🌨️",cooldown:30}, overdrive:{name:"Overdrive",icon:"⚙️",cooldown:32}, supplies:{name:"Emergency Supplies",icon:"📦",cooldown:45}, repair:{name:"Base Repair",icon:"🛠️",cooldown:40}, meteor:{name:"Meteor",icon:"☄️",cooldown:38} }; const maps = [ { id: "grass", name: "Grasslands Crossroads", recommended: "Easy", background: "#58a63b", road: "#c49b63", line: "#8d6338", boss: "Giant Brute", bossColor: "#33691e", bossPower: "Tower Slam", description: "A beginner-friendly crossroads with ponds creating clear short-range and long-range tower zones.", path: [ [0, 300], [130, 300], [210, 180], [360, 180], [430, 300], [360, 420], [210, 420], [150, 330], [300, 300], [480, 300], [580, 150], [730, 150], [810, 300], [730, 450], [580, 450], [520, 330], [720, 300], [920, 300], [1020, 200], [1200, 200] ], obstacles: [ {x: 285, y: 300, r: 58, color: "#0277bd"}, {x: 655, y: 300, r: 62, color: "#0288d1"}, {x: 475, y: 80, r: 48, color: "#2e7d32"}, {x: 475, y: 520, r: 48, color: "#2e7d32"}, {x: 930, y: 420, w: 120, h: 90, color: "#5d4037"} ] }, { id: "ice", name: "Frozen River", recommended: "Medium", background: "#81d4fa", road: "#e1f5fe", line: "#4fc3f7", boss: "Frost King", bossColor: "#0277bd", bossPower: "Tower Freeze", description: "Two frozen lakes split the battlefield into risky central platforms and safer outer firing lanes.", path: [ [0, 120], [180, 120], [250, 230], [180, 340], [250, 470], [430, 470], [500, 360], [430, 250], [500, 120], [690, 120], [760, 230], [690, 350], [760, 485], [930, 485], [1000, 360], [930, 245], [1010, 120], [1200, 120] ], obstacles: [ {x: 335, y: 295, r: 80, color: "#b3e5fc"}, {x: 600, y: 330, r: 88, color: "#e1f5fe"}, {x: 855, y: 290, r: 78, color: "#b3e5fc"}, {x: 105, y: 480, r: 55, color: "#4fc3f7"}, {x: 1100, y: 475, r: 55, color: "#4fc3f7"} ] }, { id: "desert", name: "Scorpion Canyon", recommended: "Medium", background: "#d9a441", road: "#d18b3f", line: "#8d5524", boss: "Sand Worm", bossColor: "#8d5524", bossPower: "Burrow", description: "A scorpion-shaped canyon creates a deadly central kill box surrounded by isolated tower plateaus.", path: [ [0, 470], [150, 470], [210, 390], [170, 280], [230, 165], [390, 120], [520, 185], [575, 300], [520, 415], [390, 480], [320, 400], [380, 310], [520, 300], [690, 300], [760, 170], [900, 110], [1030, 170], [970, 280], [1040, 400], [1200, 400] ], obstacles: [ {x: 105, y: 215, r: 65, color: "#6d4c41"}, {x: 330, y: 275, r: 60, color: "#5d4037"}, {x: 650, y: 105, r: 72, color: "#6d4c41"}, {x: 650, y: 490, r: 72, color: "#5d4037"}, {x: 865, y: 315, r: 78, color: "#6d4c41"}, {x: 1110, y: 120, w: 90, h: 100, color: "#795548"} ] }, { id: "volcano", name: "Magma Loop", recommended: "Hard", background: "#4e342e", road: "#ff7043", line: "#ffca28", boss: "Magma Titan", bossColor: "#bf360c", bossPower: "Summon Minions", description: "Enemies circle a full volcanic loop before escaping through a narrow final lane.", path: [ [0, 300], [130, 300], [190, 175], [330, 90], [510, 100], [625, 210], [640, 360], [545, 490], [370, 525], [220, 455], [155, 340], [210, 225], [345, 165], [495, 190], [555, 285], [520, 390], [410, 445], [295, 395], [270, 300], [350, 245], [455, 265], [490, 330], [430, 365], [365, 330], [420, 300], [690, 300], [785, 145], [945, 145], [1030, 300], [945, 455], [790, 455], [735, 340], [930, 300], [1200, 300] ], obstacles: [ {x: 400, y: 305, r: 72, color: "#ff3d00"}, {x: 100, y: 105, r: 64, color: "#bf360c"}, {x: 100, y: 505, r: 64, color: "#ff6d00"}, {x: 700, y: 85, r: 58, color: "#ff3d00"}, {x: 700, y: 515, r: 58, color: "#ff6d00"}, {x: 860, y: 300, r: 62, color: "#d84315"}, {x: 1100, y: 130, r: 60, color: "#ff3d00"}, {x: 1100, y: 470, r: 60, color: "#bf360c"} ] }, { id: "swamp", name: "Swamp Serpent", recommended: "Hard", background: "#456b2f", road: "#7d9450", line: "#c5e1a5", boss: "Swamp Queen", bossColor: "#1b5e20", bossPower: "Sticky Fog", description: "A coiled swamp trail repeatedly passes central tower islands while mud blocks easy placement.", path: [ [0, 420], [150, 420], [210, 500], [380, 510], [455, 410], [390, 315], [230, 315], [160, 230], [230, 130], [420, 120], [520, 220], [470, 330], [560, 430], [740, 430], [810, 330], [750, 225], [820, 115], [1010, 115], [1070, 225], [1010, 335], [1080, 445], [1200, 445] ], obstacles: [ {x: 100, y: 160, r: 72, color: "#33691e"}, {x: 315, y: 215, r: 60, color: "#1b5e20"}, {x: 350, y: 415, r: 55, color: "#4e342e"}, {x: 620, y: 295, r: 82, color: "#33691e"}, {x: 900, y: 300, r: 68, color: "#1b5e20"}, {x: 1120, y: 110, r: 62, color: "#4e342e"} ] }, { id: "city", name: "Dead City Grid", recommended: "Hard", background: "#607d8b", road: "#424242", line: "#fafafa", boss: "Zombie General", bossColor: "#263238", bossPower: "Rally Horde", description: "A city grid uses sharp turns, repeated intersections, and rooftop-sized placement pockets.", path: [ [0, 100], [180, 100], [180, 250], [350, 250], [350, 100], [530, 100], [530, 420], [350, 420], [350, 520], [700, 520], [700, 350], [610, 350], [610, 210], [820, 210], [820, 90], [1010, 90], [1010, 270], [890, 270], [890, 450], [1080, 450], [1080, 330], [1200, 330] ], obstacles: [ {x: 65, y: 220, w: 95, h: 155, color: "#263238"}, {x: 235, y: 330, w: 95, h: 160, color: "#37474f"}, {x: 390, y: 285, w: 115, h: 105, color: "#263238"}, {x: 560, y: 455, w: 110, h: 55, color: "#37474f"}, {x: 685, y: 80, w: 105, h: 110, color: "#263238"}, {x: 740, y: 375, w: 120, h: 110, color: "#37474f"}, {x: 900, y: 105, w: 90, h: 135, color: "#263238"}, {x: 1090, y: 100, w: 90, h: 160, color: "#37474f"} ] }, { id: "space", name: "Orbital Collision", recommended: "Hard", background: "#101044", road: "#7e57c2", line: "#d1c4e9", boss: "Void Monster", bossColor: "#4a148c", bossPower: "Teleport", description: "The route completes an orbital ring, cuts through its center, and launches toward the exit.", path: [ [0, 300], [150, 300], [215, 165], [370, 80], [555, 100], [675, 220], [690, 365], [585, 500], [400, 530], [235, 450], [170, 330], [245, 215], [390, 145], [545, 175], [610, 285], [560, 390], [425, 445], [300, 380], [285, 285], [380, 225], [500, 260], [530, 330], [445, 370], [390, 315], [470, 300], [760, 300], [850, 120], [1020, 120], [1090, 300], [1020, 485], [850, 485], [790, 350], [990, 300], [1200, 300] ], obstacles: [ {x: 430, y: 300, r: 68, color: "#000000"}, {x: 105, y: 105, r: 62, color: "#1a0033"}, {x: 105, y: 505, r: 62, color: "#000000"}, {x: 720, y: 100, r: 65, color: "#1a0033"}, {x: 720, y: 500, r: 65, color: "#000000"}, {x: 925, y: 300, r: 73, color: "#1a0033"}, {x: 1130, y: 100, r: 55, color: "#000000"}, {x: 1130, y: 500, r: 55, color: "#1a0033"} ] }, { id: "candy", name: "Candy Spiral", recommended: "Hard", background: "#f8bbd0", road: "#ff80ab", line: "#fff176", boss: "Sugar Beast", bossColor: "#ad1457", bossPower: "Candy Split", description: "A giant candy spiral repeatedly exposes enemies to a valuable but dangerously small center platform.", path: [ [0, 300], [120, 300], [165, 145], [320, 70], [525, 85], [670, 195], [710, 365], [610, 505], [400, 535], [225, 460], [155, 335], [220, 210], [360, 140], [520, 165], [610, 260], [600, 375], [500, 445], [365, 420], [285, 345], [300, 255], [390, 205], [490, 230], [530, 300], [490, 360], [410, 360], [375, 305], [430, 275], [485, 305], [540, 300], [760, 300], [860, 170], [1000, 170], [1070, 300], [1000, 430], [850, 430], [800, 335], [1000, 300], [1200, 300] ], obstacles: [ {x: 430, y: 305, r: 50, color: "#fff176"}, {x: 90, y: 100, r: 62, color: "#ec407a"}, {x: 90, y: 500, r: 62, color: "#fff176"}, {x: 730, y: 100, r: 65, color: "#ec407a"}, {x: 730, y: 500, r: 65, color: "#fff176"}, {x: 930, y: 300, r: 64, color: "#ec407a"}, {x: 1120, y: 110, r: 55, color: "#fff176"}, {x: 1120, y: 485, r: 55, color: "#ec407a"} ] }, { id: "jungle", name: "Temple Clover", recommended: "Medium", background: "#1b5e20", road: "#8d6e63", line: "#c5e1a5", boss: "Ancient Guardian", bossColor: "#558b2f", bossPower: "Nature Healing", description: "A four-leaf temple route creates overlapping firing lanes around a heavily contested center.", path: [ [0, 300], [160, 300], [235, 180], [365, 150], [450, 230], [400, 300], [450, 370], [365, 450], [235, 420], [180, 320], [300, 300], [440, 300], [520, 180], [650, 150], [740, 230], [680, 300], [740, 370], [650, 455], [520, 420], [470, 320], [600, 300], [800, 300], [880, 165], [1030, 165], [1100, 300], [1030, 440], [875, 440], [825, 335], [1010, 300], [1200, 300] ], obstacles: [ {x: 350, y: 300, r: 58, color: "#33691e"}, {x: 620, y: 300, r: 62, color: "#2e7d32"}, {x: 920, y: 300, r: 60, color: "#33691e"}, {x: 115, y: 110, r: 65, color: "#2e7d32"}, {x: 115, y: 500, r: 65, color: "#33691e"}, {x: 795, y: 90, r: 58, color: "#2e7d32"}, {x: 795, y: 510, r: 58, color: "#33691e"} ] }, { id: "graveyard", name: "Haunted Catacombs", recommended: "Medium", background: "#37474f", road: "#616161", line: "#b0bec5", boss: "Grave Lord", bossColor: "#212121", bossPower: "Raise the Dead", description: "A coffin-shaped route surrounds grave plots before cutting through the haunted central crypt.", path: [ [0, 300], [140, 300], [200, 130], [420, 70], [630, 130], [700, 300], [630, 470], [420, 530], [200, 470], [140, 300], [300, 300], [360, 190], [520, 190], [585, 300], [520, 410], [360, 410], [300, 300], [520, 300], [730, 300], [800, 150], [980, 110], [1080, 240], [1020, 390], [850, 465], [790, 340], [1000, 300], [1200, 300] ], obstacles: [ {x: 255, y: 205, w: 60, h: 90, color: "#212121"}, {x: 255, y: 355, w: 60, h: 90, color: "#263238"}, {x: 420, y: 275, w: 85, h: 55, color: "#171717"}, {x: 620, y: 215, w: 55, h: 90, color: "#263238"}, {x: 620, y: 350, w: 55, h: 90, color: "#212121"}, {x: 790, y: 250, w: 65, h: 100, color: "#263238"}, {x: 935, y: 210, w: 60, h: 95, color: "#212121"}, {x: 1100, y: 420, w: 65, h: 95, color: "#263238"} ] }, { id: "ocean", name: "Trident Fortress", recommended: "Hard", background: "#0277bd", road: "#90a4ae", line: "#e1f5fe", boss: "Leviathan", bossColor: "#01579b", bossPower: "Tidal Rush", description: "A trident-shaped sea wall produces three overlapping lanes around tiny fortified islands.", path: [ [0, 300], [180, 300], [260, 150], [400, 90], [520, 160], [450, 275], [300, 300], [450, 325], [520, 440], [400, 515], [260, 450], [180, 300], [420, 300], [580, 300], [650, 115], [790, 80], [850, 200], [760, 300], [850, 400], [790, 520], [650, 485], [580, 300], [820, 300], [970, 175], [1070, 220], [1020, 300], [1070, 380], [970, 430], [900, 330], [1050, 300], [1200, 300] ], obstacles: [ {x: 350, y: 300, r: 55, color: "#01579b"}, {x: 685, y: 300, r: 62, color: "#0288d1"}, {x: 950, y: 300, r: 52, color: "#01579b"}, {x: 100, y: 110, r: 70, color: "#01579b"}, {x: 100, y: 500, r: 70, color: "#0288d1"}, {x: 540, y: 75, r: 55, color: "#01579b"}, {x: 540, y: 525, r: 55, color: "#0288d1"}, {x: 1130, y: 100, r: 55, color: "#01579b"}, {x: 1130, y: 500, r: 55, color: "#0288d1"} ] }, { id: "moon", name: "Lunar Infinity", recommended: "Hard", background: "#263238", road: "#9e9e9e", line: "#eceff1", boss: "Lunar Colossus", bossColor: "#455a64", bossPower: "Gravity Lock", description: "An infinity-shaped moon route crosses itself twice, creating powerful but exposed central positions.", path: [ [0, 300], [150, 300], [235, 170], [390, 120], [520, 210], [600, 300], [680, 390], [810, 480], [970, 430], [1040, 300], [970, 170], [810, 120], [680, 210], [600, 300], [520, 390], [390, 480], [235, 430], [170, 320], [300, 300], [470, 300], [600, 300], [750, 300], [900, 300], [1200, 300] ], obstacles: [ {x: 340, y: 300, r: 62, color: "#111111"}, {x: 600, y: 145, r: 62, color: "#171717"}, {x: 600, y: 455, r: 62, color: "#111111"}, {x: 860, y: 300, r: 65, color: "#171717"}, {x: 105, y: 110, r: 60, color: "#111111"}, {x: 105, y: 500, r: 60, color: "#171717"}, {x: 1110, y: 120, r: 62, color: "#111111"}, {x: 1110, y: 485, r: 62, color: "#171717"} ] }, { id: "factory", name: "Abandoned Factory", recommended: "Medium", background: "#455a64", road: "#795548", line: "#ffca28", boss: "War Machine", bossColor: "#b71c1c", bossPower: "Armor Upgrade", description: "A mechanical conveyor route uses long straights, U-turns, and compact machine-room firing pockets.", path: [ [0, 90], [220, 90], [220, 210], [90, 210], [90, 350], [330, 350], [330, 500], [520, 500], [520, 300], [430, 300], [430, 150], [680, 150], [680, 430], [850, 430], [850, 90], [1040, 90], [1040, 230], [940, 230], [940, 360], [1100, 360], [1100, 500], [1200, 500] ], obstacles: [ {x: 120, y: 420, w: 130, h: 80, color: "#263238"}, {x: 270, y: 130, w: 120, h: 90, color: "#37474f"}, {x: 360, y: 370, w: 130, h: 90, color: "#263238"}, {x: 540, y: 180, w: 105, h: 90, color: "#37474f"}, {x: 715, y: 230, w: 110, h: 140, color: "#263238"}, {x: 875, y: 470, w: 100, h: 70, color: "#37474f"}, {x: 1070, y: 130, w: 100, h: 80, color: "#263238"} ] }, { id: "ruins", name: "Ancient Sun Temple", recommended: "Medium", background: "#9e8b61", road: "#bcaaa4", line: "#6d4c41", boss: "Stone Emperor", bossColor: "#5d4037", bossPower: "Stone Legion", description: "A sun-shaped temple route circles a central monument before escaping through broken outer walls.", path: [ [0, 300], [160, 300], [230, 145], [390, 85], [540, 150], [600, 300], [540, 450], [390, 515], [230, 450], [160, 300], [290, 300], [340, 205], [450, 180], [525, 260], [500, 360], [400, 415], [315, 355], [290, 300], [420, 300], [600, 300], [760, 300], [830, 150], [985, 95], [1090, 200], [1040, 300], [1090, 400], [985, 505], [830, 450], [780, 330], [1000, 300], [1200, 300] ], obstacles: [ {x: 410, y: 300, r: 58, color: "#5d4037"}, {x: 100, y: 110, w: 85, h: 100, color: "#6d4c41"}, {x: 100, y: 430, w: 85, h: 100, color: "#795548"}, {x: 630, y: 100, w: 95, h: 115, color: "#6d4c41"}, {x: 630, y: 390, w: 95, h: 115, color: "#795548"}, {x: 900, y: 250, w: 80, h: 100, color: "#6d4c41"}, {x: 1100, y: 85, w: 80, h: 105, color: "#795548"}, {x: 1100, y: 420, w: 80, h: 105, color: "#6d4c41"} ] }, { id: "storm", name: "Thunderbolt Peaks", recommended: "Hard", background: "#546e7a", road: "#78909c", line: "#fff176", boss: "Thunder Beast", bossColor: "#f9a825", bossPower: "Lightning Surge", description: "A lightning-bolt route creates abrupt reversals with mountain peaks blocking the safest placements.", path: [ [0, 100], [250, 100], [160, 250], [420, 250], [290, 440], [550, 440], [470, 300], [690, 300], [610, 130], [840, 130], [750, 330], [980, 330], [900, 500], [1110, 500], [1030, 370], [1200, 370] ], obstacles: [ {x: 105, y: 385, r: 75, color: "#37474f"}, {x: 340, y: 130, r: 70, color: "#455a64"}, {x: 455, y: 520, r: 62, color: "#37474f"}, {x: 585, y: 185, r: 68, color: "#455a64"}, {x: 785, y: 455, r: 73, color: "#37474f"}, {x: 925, y: 150, r: 70, color: "#455a64"}, {x: 1110, y: 130, r: 65, color: "#37474f"} ] }, { id: "abyss", name: "The Abyssal Eye", recommended: "Hard", background: "#080018", road: "#311b92", line: "#e040fb", boss: "Abyss King", bossColor: "#4a148c", bossPower: "Reality Tear", description: "Enemies circle the Abyssal Eye before crossing its center, leaving only a few dangerous tower platforms.", path: [ [0, 300], [150, 300], [210, 145], [370, 65], [570, 85], [720, 210], [740, 375], [620, 510], [420, 535], [240, 455], [160, 325], [225, 200], [375, 125], [545, 155], [650, 260], [645, 365], [535, 450], [390, 425], [300, 350], [300, 260], [390, 185], [520, 205], [580, 280], [560, 350], [480, 395], [390, 355], [375, 290], [435, 250], [500, 285], [500, 330], [450, 345], [430, 305], [500, 300], [770, 300], [850, 140], [1020, 140], [1090, 300], [1020, 460], [850, 460], [800, 340], [1000, 300], [1200, 300] ], obstacles: [ {x: 450, y: 300, r: 72, color: "#000000"}, {x: 95, y: 95, r: 65, color: "#120020"}, {x: 95, y: 505, r: 65, color: "#000000"}, {x: 760, y: 90, r: 65, color: "#120020"}, {x: 760, y: 510, r: 65, color: "#000000"}, {x: 925, y: 300, r: 70, color: "#120020"}, {x: 1120, y: 100, r: 58, color: "#000000"}, {x: 1120, y: 500, r: 58, color: "#120020"} ] } ]; const missions={ noFarm:{name:"No Farming Allowed",description:"Beat wave 10 without placing a Farm.",reward:40}, perfectBoss:{name:"Untouchable",description:"Defeat a boss without losing base health during its wave.",reward:50}, wave50:{name:"Endless Defender",description:"Reach wave 50 in one run.",reward:100}, humanOnly:{name:"Human Resistance",description:"Beat wave 10 using only Human towers.",reward:60}, thousandKills:{name:"Zombie Hunter",description:"Defeat 1,000 zombies across all runs.",reward:100}, hardVictory:{name:"Hard Mode Hero",description:"Beat wave 10 using Hard difficulty.",reward:75} }; let account={ zombieBucks:0, freeTowerType:null, totalRound10Wins:0, unlockedMapCount:1, cashBoosts:0, permanentDamageLevel:0, permanentCashLevel:0, completedMaps:{}, ownedHumans:["survivor"], equippedHuman:"survivor", totalKills:0, completedMissions:{} }; let currentMap=null; let currentDifficulty="medium"; let money=260; let health=MAX_HEALTH; let wave=1; let towers=[]; let enemies=[]; let effects=[]; let selectedTower=null; let placementType=null; let pointer={x:0,y:0}; let waveRunning=false; let gameActive=false; let paused=false; let autoStart=false; let speedMultiplier=1; let gameTime=0; let lastTimestamp=0; let bossStartHealth=MAX_HEALTH; let overdriveUntil=0; let abilityReady={}; let runUsedFarm=false; let runOnlyHumans=true; let runPlacedTower=false; let warningTimer=null; let nextUiUpdate=0; function difficultyData(){ return difficulties[currentDifficulty]||difficulties.medium; } function setMessage(text){ message.textContent=text; } function cleanAccount(data={}){ const owned=Array.isArray(data.ownedHumans) ?data.ownedHumans.filter(id=>humanTypes[id]) :["survivor"]; if(!owned.includes("survivor"))owned.unshift("survivor"); return{ zombieBucks:Math.max(0,Number(data.zombieBucks)||0), freeTowerType:data.freeTowerType&&towerTypes[data.freeTowerType]&&data.freeTowerType!=="waste"?data.freeTowerType:null, totalRound10Wins:Math.max(0,Number(data.totalRound10Wins)||0), unlockedMapCount:Math.max(1,Math.min(maps.length,Number(data.unlockedMapCount)||1)), cashBoosts:Math.max(0,Number(data.cashBoosts)||0), permanentDamageLevel:Math.max(0,Math.min(10,Number(data.permanentDamageLevel)||0)), permanentCashLevel:Math.max(0,Math.min(10,Number(data.permanentCashLevel)||0)), completedMaps:data.completedMaps&&typeof data.completedMaps==="object"?data.completedMaps:{}, ownedHumans:owned, equippedHuman:owned.includes(data.equippedHuman)?data.equippedHuman:"survivor", totalKills:Math.max(0,Number(data.totalKills)||0), completedMissions:data.completedMissions&&typeof data.completedMissions==="object"?data.completedMissions:{} }; } function loadAccount(){ let saved=localStorage.getItem(SAVE_KEY); if(!saved){ for(const key of OLD_SAVE_KEYS){ saved=localStorage.getItem(key); if(saved)break; } } if(saved){ try{ account=cleanAccount(JSON.parse(saved)); }catch(error){ account=cleanAccount(); } } saveAccount(false); } function saveAccount(show=true){ localStorage.setItem(SAVE_KEY,JSON.stringify(account)); renderLobby(); if(show)setMessage("Account saved!"); } function downloadSave(){ saveAccount(false); const data={ game:"Zombie Defense", version:"V5 Boss Invasion Expanded", ...account }; const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download="zombie-defense-v5-expanded-save.json"; link.click(); URL.revokeObjectURL(url); setMessage("Save file downloaded."); } function uploadSave(event){ const file=event.target.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=()=>{ try{ account=cleanAccount(JSON.parse(reader.result)); saveAccount(false); renderHumans(); renderMissions(); setMessage("Save file loaded."); }catch(error){ setMessage("That save file did not work."); } event.target.value=""; }; reader.readAsText(file); } function permanentDamageMultiplier(){ return 1+account.permanentDamageLevel*.05; } function permanentStartingCash(){ return account.permanentCashLevel*50; } function permanentDamageCost(){ return 75+account.permanentDamageLevel*50; } function permanentCashCost(){ return 60+account.permanentCashLevel*40; } function recommendedDifficulty(map){ if(map.recommended==="Easy")return"easy"; if(map.recommended==="Hard")return"hard"; return"medium"; } function renderLobby(){ document.getElementById("lobbyBucks").textContent=account.zombieBucks; document.getElementById("unlockedText").textContent=account.unlockedMapCount; document.getElementById("totalMapsText").textContent=maps.length; document.getElementById("freeTowerText").textContent=account.freeTowerType?towerTypes[account.freeTowerType].name:"None"; document.getElementById("cashBoostText").textContent=account.cashBoosts; document.getElementById("permDamageText").textContent=account.permanentDamageLevel*5; document.getElementById("permCashText").textContent=permanentStartingCash(); document.getElementById("killsText").textContent=account.totalKills; const human=humanTypes[account.equippedHuman]||humanTypes.survivor; document.getElementById("humanText").textContent=human.icon+" "+human.name; const rollButton=document.getElementById("rollTowerButton"); const boostButton=document.getElementById("cashBoostButton"); const damageMetaButton=document.getElementById("permDamageButton"); const cashMetaButton=document.getElementById("permCashButton"); rollButton.disabled=account.zombieBucks<100||Boolean(account.freeTowerType); boostButton.disabled=account.zombieBucks<50; if(account.permanentDamageLevel>=10){ damageMetaButton.textContent="Permanent Damage: MAXED"; damageMetaButton.disabled=true; }else{ const cost=permanentDamageCost(); damageMetaButton.textContent="Permanent +5% Damage — "+cost+" Zombie-Bucks"; damageMetaButton.disabled=account.zombieBucks<cost; } if(account.permanentCashLevel>=10){ cashMetaButton.textContent="Permanent Cash: MAXED"; cashMetaButton.disabled=true; }else{ const cost=permanentCashCost(); cashMetaButton.textContent="Permanent +$50 Cash — "+cost+" Zombie-Bucks"; cashMetaButton.disabled=account.zombieBucks<cost; } mapGrid.innerHTML=maps.map((map,index)=>{ const unlocked=index<account.unlockedMapCount; const completed=Boolean(account.completedMaps[map.id]); const defaultDifficulty=recommendedDifficulty(map); return` <div class="mapCard ${unlocked?"":"locked"} ${completed?"completed":""}"> <h2>${map.name}</h2> <p>${map.description}</p> <p><strong>Boss:</strong> ${map.boss}</p> <span class="difficulty">Recommended: ${map.recommended}</span> <div class="difficultyDetails"> <div class="easyText"><strong>Easy:</strong> 5 Zombie-Bucks</div> <div class="mediumText"><strong>Medium:</strong> 10 Zombie-Bucks</div> <div class="hardText"><strong>Hard:</strong> 20 Zombie-Bucks</div> </div> <select data-difficulty="${index}" ${unlocked?"":"disabled"}> <option value="easy" ${defaultDifficulty==="easy"?"selected":""}>Easy — 5 Zombie-Bucks</option> <option value="medium" ${defaultDifficulty==="medium"?"selected":""}>Medium — 10 Zombie-Bucks</option> <option value="hard" ${defaultDifficulty==="hard"?"selected":""}>Hard — 20 Zombie-Bucks</option> </select> <p>${completed?"✅ Completed":unlocked?"Unlocked":"Locked"}</p> <button class="green" data-map="${index}" ${unlocked?"":"disabled"}> ${unlocked?"Play "+map.name:"Locked"} </button> </div> `; }).join(""); mapGrid.querySelectorAll("button[data-map]").forEach(button=>{ button.addEventListener("click",()=>{ const index=Number(button.dataset.map); const selector=mapGrid.querySelector(`select[data-difficulty="${index}"]`); startMap(index,selector?selector.value:"medium"); }); }); } function renderHumans(){ humanGrid.innerHTML=Object.entries(humanTypes).map(([id,human])=>{ const owned=account.ownedHumans.includes(id); const equipped=account.equippedHuman===id; return` <div class="humanCard ${equipped?"equipped":""}"> <div class="humanIcon">${human.icon}</div> <h2>${human.name}</h2> <p>${human.description}</p> <button data-human="${id}" ${!owned&&account.zombieBucks<human.cost?"disabled":""}> ${equipped?"Equipped":owned?"Equip":"Buy — "+human.cost+" Zombie-Bucks"} </button> </div> `; }).join(""); humanGrid.querySelectorAll("button[data-human]").forEach(button=>{ button.addEventListener("click",()=>{ const id=button.dataset.human; const human=humanTypes[id]; if(account.ownedHumans.includes(id)){ account.equippedHuman=id; saveAccount(false); renderHumans(); setMessage(human.name+" equipped."); return; } if(account.zombieBucks<human.cost)return; account.zombieBucks-=human.cost; account.ownedHumans.push(id); account.equippedHuman=id; saveAccount(false); renderHumans(); setMessage(human.name+" purchased and equipped."); }); }); } function renderMissions(){ missionGrid.innerHTML=Object.entries(missions).map(([id,mission])=>{ const completed=Boolean(account.completedMissions[id]); return` <div class="missionCard ${completed?"completed":""}"> <h3>${completed?"✅ ":""}${mission.name}</h3> <p>${mission.description}</p> <p class="rewardText">Reward: ${mission.reward} Zombie-Bucks</p> <p>${completed?"Completed":"Not completed"}</p> </div> `; }).join(""); } function completeMission(id){ if(!missions[id]||account.completedMissions[id])return; account.completedMissions[id]=true; account.zombieBucks+=missions[id].reward; saveAccount(false); renderMissions(); showWarning( "MISSION COMPLETE: "+ missions[id].name+ " +"+ missions[id].reward+ " Zombie-Bucks" ); } function rollFreeTower(){ if(account.zombieBucks<100||account.freeTowerType)return; const choices=Object.keys(towerTypes).filter(id=>id!=="waste"); account.zombieBucks-=100; account.freeTowerType=choices[Math.floor(Math.random()*choices.length)]; saveAccount(false); setMessage("You rolled a free "+towerTypes[account.freeTowerType].name+"!"); } function buyCashBoost(){ if(account.zombieBucks<50)return; account.zombieBucks-=50; account.cashBoosts++; saveAccount(false); setMessage("Your next run will receive an extra $150."); } function buyPermanentDamage(){ const cost=permanentDamageCost(); if(account.permanentDamageLevel>=10||account.zombieBucks<cost)return; account.zombieBucks-=cost; account.permanentDamageLevel++; saveAccount(false); setMessage("Permanent damage increased to +"+account.permanentDamageLevel*5+"%."); } function buyPermanentCash(){ const cost=permanentCashCost(); if(account.permanentCashLevel>=10||account.zombieBucks<cost)return; account.zombieBucks-=cost; account.permanentCashLevel++; saveAccount(false); setMessage("Permanent starting cash increased to +$"+permanentStartingCash()+"."); } function buildGameButtons(){ towerBar.innerHTML=Object.entries(towerTypes).map(([id,tower])=>` <button data-tower="${id}"> ${tower.icon} ${tower.name} ($${tower.cost}) </button> `).join(""); towerBar.querySelectorAll("button[data-tower]").forEach(button=>{ button.addEventListener("click",()=>{ beginPlacement(button.dataset.tower); }); }); controlBar.innerHTML=` <button id="startWaveButton" class="green">Start Wave</button> <button id="autoButton" class="blue">Auto Start: OFF</button> <button id="gameSpeedButton" class="blue">Speed: 1x</button> <button id="rewardButton" class="red">Supply Drop (+$25)</button> <button id="lobbyButton" class="purple">Back to Lobby</button> `; document.getElementById("startWaveButton").addEventListener("click",startWave); document.getElementById("autoButton").addEventListener("click",()=>{ autoStart=!autoStart; document.getElementById("autoButton").textContent="Auto Start: "+(autoStart?"ON":"OFF"); setMessage("Auto Start "+(autoStart?"enabled.":"disabled.")); if(autoStart&&!waveRunning)scheduleAutoStart(); }); document.getElementById("gameSpeedButton").addEventListener("click",()=>{ speedMultiplier=speedMultiplier===1?2:1; document.getElementById("gameSpeedButton").textContent="Speed: "+speedMultiplier+"x"; setMessage("Game speed set to "+speedMultiplier+"x."); }); document.getElementById("rewardButton").addEventListener("click",()=>{ const button=document.getElementById("rewardButton"); if(button.disabled)return; money+=25; button.disabled=true; button.textContent="Supply Drop Cooldown"; setMessage("Supply Drop delivered $25."); setTimeout(()=>{ if(gameActive){ button.disabled=false; button.textContent="Supply Drop (+$25)"; } },120000); }); document.getElementById("lobbyButton").addEventListener("click",()=>{ returnToLobby("Returned to the lobby. Run progress was reset."); }); abilityBar.innerHTML=Object.entries(abilities).map(([id,ability])=>` <button data-ability="${id}"> ${ability.icon} ${ability.name} </button> `).join(""); abilityBar.querySelectorAll("button[data-ability]").forEach(button=>{ button.addEventListener("click",()=>{ activateAbility(button.dataset.ability); }); }); } function startMap(index,difficulty="medium"){ if(index<0||index>=account.unlockedMapCount)return; currentMap=maps[index]; currentDifficulty=difficulties[difficulty]?difficulty:"medium"; const settings=difficultyData(); money=Math.floor((260+permanentStartingCash())*settings.startingCash); if(account.cashBoosts>0){ account.cashBoosts--; money+=150; saveAccount(false); } health=MAX_HEALTH; wave=1; towers=[]; enemies=[]; effects=[]; selectedTower=null; placementType=null; waveRunning=false; gameActive=true; paused=false; autoStart=false; speedMultiplier=1; gameTime=0; lastTimestamp=performance.now(); bossStartHealth=MAX_HEALTH; overdriveUntil=0; abilityReady={}; runUsedFarm=false; runOnlyHumans=true; runPlacedTower=false; lobby.classList.remove("visible"); humanShop.classList.remove("visible"); missionsPage.classList.remove("visible"); resultOverlay.classList.remove("visible"); towerBar.classList.remove("hidden"); controlBar.classList.remove("hidden"); abilityBar.classList.remove("hidden"); towerPanel.style.display="none"; bossPanel.style.display="none"; document.getElementById("autoButton").textContent="Auto Start: OFF"; document.getElementById("gameSpeedButton").textContent="Speed: 1x"; setMessage( currentMap.name+ " selected on "+ settings.name+ ". Wave 10 rewards "+ settings.bucks+ " Zombie-Bucks." ); updateUI(); } function returnToLobby(text="Choose a map and difficulty."){ gameActive=false; paused=false; waveRunning=false; currentMap=null; towers=[]; enemies=[]; effects=[]; selectedTower=null; placementType=null; towerPanel.style.display="none"; bossPanel.style.display="none"; resultOverlay.classList.remove("visible"); towerBar.classList.add("hidden"); controlBar.classList.add("hidden"); abilityBar.classList.add("hidden"); lobby.classList.add("visible"); saveAccount(false); setMessage(text); updateUI(); } function beginPlacement(type){ const tower=towerTypes[type]; if(!tower||!gameActive||paused)return; const free=account.freeTowerType===type; if(!free&&money<tower.cost){ setMessage("Not enough money."); return; } placementType=type; selectedTower=null; towerPanel.style.display="none"; setMessage("Click a valid area to place "+tower.name+". Press Escape to cancel."); } function pointSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1; const dy=y2-y1; const lengthSquared=dx*dx+dy*dy; if(lengthSquared===0)return Math.hypot(px-x1,py-y1); const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/lengthSquared)); const x=x1+t*dx; const y=y1+t*dy; return Math.hypot(px-x,py-y); } function validPlacement(x,y){ if(!currentMap)return false; if(x<25||y<25||x>WIDTH-25||y>HEIGHT-25)return false; for(let i=0;i<currentMap.path.length-1;i++){ const first=currentMap.path[i]; const second=currentMap.path[i+1]; if(pointSegmentDistance(x,y,first[0],first[1],second[0],second[1])<62){ return false; } } for(const object of currentMap.obstacles){ if(object.r){ if(Math.hypot(x-object.x,y-object.y)<object.r+27)return false; }else if( x>object.x-object.w/2-27&& x<object.x+object.w/2+27&& y>object.y-object.h/2-27&& y<object.y+object.h/2+27 ){ return false; } } return !towers.some(tower=>Math.hypot(x-tower.x,y-tower.y)<50); } function placeTower(type,x,y){ const base=towerTypes[type]; const free=account.freeTowerType===type; if(!free&&money<base.cost)return; let stats={...base}; let humanType=null; if(type==="human"){ humanType=account.equippedHuman; stats={ ...base, ...humanTypes[humanType], cost:base.cost, color:base.color }; } if(free){ account.freeTowerType=null; saveAccount(false); }else{ money-=base.cost; } const tower={ type, humanType, name:type==="human"?humanTypes[humanType].name+" Human":base.name, icon:type==="human"?humanTypes[humanType].icon:base.icon, color:base.color, x, y, cost:base.cost, spent:base.cost, damage:(stats.damage||0)*permanentDamageMultiplier(), range:stats.range||0, rate:stats.rate||0, splash:stats.splash||0, slow:stats.slow||1, poison:stats.poison||0, burn:stats.burn||0, chain:stats.chain||0, pierce:stats.pierce||1, income:stats.income||0, heal:stats.heal||0, auraDamage:stats.auraDamage||0, auraSpeed:stats.auraSpeed||0, auraRange:stats.auraRange||0, detectInvisible:Boolean(stats.detectInvisible), nonAttacking:Boolean(stats.nonAttacking), targeting:"first", upgrades:{damage:0,range:0,speed:0}, evolution:null, ability:null, lastShot:-999, stunnedUntil:0, bossBonus:1, eliteBonus:1, invisibleBonus:1, frozenBonus:1, critChance:0, critDamage:2, ignoreArmor:false, curse:stats.curse||0, bossBuck:0 }; towers.push(tower); placementType=null; runPlacedTower=true; if(type==="farm")runUsedFarm=true; if(type!=="human")runOnlyHumans=false; setMessage(tower.name+" placed."); updateUI(); } function getPathPosition(progress){ const points=currentMap.path; const segments=[]; let total=0; for(let i=0;i<points.length-1;i++){ const length=Math.hypot( points[i+1][0]-points[i][0], points[i+1][1]-points[i][1] ); segments.push(length); total+=length; } let distance=Math.max(0,Math.min(1,progress))*total; for(let i=0;i<segments.length;i++){ if(distance<=segments[i]){ const ratio=distance/segments[i]; return{ x:points[i][0]+(points[i+1][0]-points[i][0])*ratio, y:points[i][1]+(points[i+1][1]-points[i][1])*ratio }; } distance-=segments[i]; } const last=points[points.length-1]; return{x:last[0],y:last[1]}; } function chooseEnemyType(index){ if(wave<5)return"normal"; if(wave>=6&&index%7===0){ const elite=["armored","regenerator","shielded","invisible","healer","splitter"]; return elite[Math.floor(Math.random()*elite.length)]; } if(wave>=8&&index%5===0)return"tank"; if(index%4===0)return"fast"; return"normal"; } function createEnemy(type,progress,boss=false){ const settings=difficultyData(); const baseHealth=35+wave*14+Math.pow(wave,1.18)*3; let healthMultiplier=1; let speed=.042+Math.min(.075,wave*.0022); let radius=17; let color="#43a047"; let reward=10; let leakDamage=5+Math.floor(wave/2); if(type==="fast"){ speed*=1.55; healthMultiplier=.8; color="#00c853"; } if(type==="tank"){ speed*=.68; healthMultiplier=2.2; radius=22; color="#33691e"; reward=18; leakDamage+=6; } if(type==="armored"){ healthMultiplier=1.7; color="#78909c"; reward=16; } if(type==="regenerator"){ healthMultiplier=1.45; color="#8bc34a"; reward=16; } if(type==="shielded"){ healthMultiplier=1.5; color="#42a5f5"; reward=17; } if(type==="invisible"){ healthMultiplier=1.15; color="#bdbdbd"; reward=18; } if(type==="healer"){ healthMultiplier=1.35; color="#ec407a"; reward=20; } if(type==="splitter"){ healthMultiplier=1.3; color="#ff9800"; reward=15; } if(boss){ healthMultiplier=18+wave*.7; speed*=.5; radius=36; color=currentMap.bossColor; reward=150+wave*5; leakDamage=250; } healthMultiplier*=settings.health; speed*=settings.speed; reward=Math.max(1,Math.round(reward*settings.cashReward)); leakDamage=Math.max(1,Math.round(leakDamage*settings.leak)); const maxHealth=Math.round(baseHealth*healthMultiplier); return{ type, boss, progress, baseSpeed:speed, radius, color, health:maxHealth, maxHealth, reward, leakDamage, shield:type==="shielded"?4:0, slowUntil:0, slowAmount:1, freezeUntil:0, poisonUntil:0, burnUntil:0, poisonDamage:0, burnDamage:0, poisonTimer:0, burnTimer:0, healTimer:0, bossTimer:0, cursed:1, child:false, dead:false }; } function startWave(){ if(!gameActive||paused||waveRunning)return; placementType=null; selectedTower=null; towerPanel.style.display="none"; enemies=[]; const settings=difficultyData(); const count=Math.max(1,Math.round((5+Math.floor(wave*1.8))*settings.count)); for(let i=0;i<count;i++){ enemies.push(createEnemy(chooseEnemyType(i),-.08*i,false)); } if(wave%10===0){ const boss=createEnemy("boss",-.08*count-.12,true); enemies.push(boss); bossStartHealth=health; showWarning( "BOSS WAVE: "+ currentMap.boss+ " — "+ currentMap.bossPower ); } waveRunning=true; setMessage( settings.name+ " wave "+ wave+ " started with "+ count+ (wave%10===0?" zombies and a boss.":" zombies.") ); updateUI(); } function scheduleAutoStart(){ if(!autoStart||waveRunning||paused||!gameActive)return; setMessage("Auto Start: next wave begins now."); setTimeout(()=>{ if(autoStart&&!waveRunning&&!paused&&gameActive)startWave(); },1000); } function enemyIsElite(enemy){ return["armored","regenerator","shielded","invisible","healer","splitter"].includes(enemy.type); } function canTarget(tower,enemy){ if(enemy.dead||enemy.progress<0)return false; if(enemy.type==="invisible"&&!tower.detectInvisible)return false; const position=getPathPosition(enemy.progress); return Math.hypot(position.x-tower.x,position.y-tower.y)<=tower.range; } function getTarget(tower){ const targets=enemies.filter(enemy=>canTarget(tower,enemy)); if(!targets.length)return null; if(tower.targeting==="last"){ return targets.reduce((best,enemy)=>enemy.progress<best.progress?enemy:best); } if(tower.targeting==="strong"){ return targets.reduce((best,enemy)=>enemy.health>best.health?enemy:best); } if(tower.targeting==="weak"){ return targets.reduce((best,enemy)=>enemy.health<best.health?enemy:best); } return targets.reduce((best,enemy)=>enemy.progress>best.progress?enemy:best); } function towerDamageMultiplier(tower){ let multiplier=1; for(const other of towers){ if( other!==tower&& other.auraDamage>0&& Math.hypot(other.x-tower.x,other.y-tower.y)<=other.auraRange ){ multiplier*=1+other.auraDamage; } } return multiplier; } function towerSpeedMultiplier(tower){ let multiplier=gameTime<overdriveUntil?2:1; for(const other of towers){ if( other!==tower&& other.auraSpeed>0&& Math.hypot(other.x-tower.x,other.y-tower.y)<=other.auraRange ){ multiplier*=1+other.auraSpeed; } } return multiplier; } function damageEnemy(enemy,amount,source={}){ if(enemy.dead)return; if(enemy.shield>0){ enemy.shield--; return; } let damage=amount*enemy.cursed; if(enemy.type==="armored"&&!source.ignoreArmor){ damage*=.62; } enemy.health-=damage; if(enemy.health<=0)killEnemy(enemy); } function killEnemy(enemy){ if(enemy.dead)return; enemy.dead=true; money+=enemy.reward; account.totalKills++; if(account.totalKills>=1000)completeMission("thousandKills"); if(enemy.type==="splitter"&&!enemy.child){ for(let i=0;i<2;i++){ const child=createEnemy("fast",Math.max(0,enemy.progress-.015*i),false); child.health=Math.max(10,enemy.maxHealth*.32); child.maxHealth=child.health; child.radius=12; child.reward=5; child.child=true; enemies.push(child); } } if(enemy.boss){ bossPanel.style.display="none"; towers.forEach(tower=>{ account.zombieBucks+=tower.bossBuck||0; }); if(health>=bossStartHealth)completeMission("perfectBoss"); saveAccount(false); showWarning(currentMap.boss+" defeated!"); } } function attackEnemy(tower,target){ let damage=tower.damage*towerDamageMultiplier(tower); if(target.boss)damage*=tower.bossBonus; if(enemyIsElite(target))damage*=tower.eliteBonus; if(target.type==="invisible")damage*=tower.invisibleBonus; if( tower.frozenBonus>1&& (target.slowUntil>gameTime||target.freezeUntil>gameTime) ){ damage*=tower.frozenBonus; } if(tower.critChance>0&&Math.random()<tower.critChance){ damage*=tower.critDamage; } const targetPosition=getPathPosition(target.progress); effects.push({ x1:tower.x, y1:tower.y, x2:targetPosition.x, y2:targetPosition.y, color:tower.color, expires:gameTime+.1 }); damageEnemy(target,damage,tower); if(tower.splash>0){ enemies.forEach(other=>{ if(other===target||other.dead||other.progress<0)return; const position=getPathPosition(other.progress); if(Math.hypot(position.x-targetPosition.x,position.y-targetPosition.y)<=tower.splash){ damageEnemy(other,damage*.5,tower); } }); } if(tower.chain>0){ let current=target; const hit=new Set([target]); for(let jump=0;jump<tower.chain;jump++){ const currentPosition=getPathPosition(current.progress); const next=enemies .filter(enemy=>!enemy.dead&&!hit.has(enemy)&&enemy.progress>=0) .map(enemy=>{ const position=getPathPosition(enemy.progress); return{ enemy, position, distance:Math.hypot( position.x-currentPosition.x, position.y-currentPosition.y ) }; }) .filter(item=>item.distance<=145) .sort((a,b)=>a.distance-b.distance)[0]; if(!next)break; effects.push({ x1:currentPosition.x, y1:currentPosition.y, x2:next.position.x, y2:next.position.y, color:"#ffff00", expires:gameTime+.1 }); hit.add(next.enemy); damageEnemy(next.enemy,damage*.62,tower); current=next.enemy; } } if(tower.pierce>1){ enemies .filter(enemy=> !enemy.dead&& enemy!==target&& enemy.progress>=0&& enemy.progress<target.progress&& target.progress-enemy.progress<.17 ) .sort((a,b)=>b.progress-a.progress) .slice(0,tower.pierce-1) .forEach((enemy,index)=>{ damageEnemy( enemy, damage*Math.max(.35,.75-index*.06), tower ); }); } if(tower.slow<1){ target.slowUntil=gameTime+2.5; target.slowAmount=tower.slow; } if(tower.poison>0){ target.poisonUntil=gameTime+4; target.poisonDamage=Math.max(target.poisonDamage,tower.poison); } if(tower.burn>0){ target.burnUntil=gameTime+3; target.burnDamage=Math.max(target.burnDamage,tower.burn); } if(tower.curse>0){ target.cursed=Math.max(target.cursed,1+tower.curse); } } function updateTowers(){ towers.forEach(tower=>{ if(tower.nonAttacking||tower.rate<=0||tower.stunnedUntil>gameTime)return; const rate=tower.rate*towerSpeedMultiplier(tower); if(gameTime-tower.lastShot<1/rate)return; const target=getTarget(tower); if(target){ tower.lastShot=gameTime; attackEnemy(tower,target); } }); } function useBossPower(boss){ if(gameTime-boss.bossTimer<6)return; boss.bossTimer=gameTime; if(["grass","ice","swamp","moon"].includes(currentMap.id)){ const duration=currentMap.id==="moon"?3:currentMap.id==="ice"?2.2:1.8; towers.forEach(tower=>{ tower.stunnedUntil=gameTime+duration; }); showWarning(currentMap.boss.toUpperCase()+" USED "+currentMap.bossPower.toUpperCase()+"!"); return; } if(["desert","space","ocean"].includes(currentMap.id)){ boss.progress=Math.min(.96,boss.progress+(currentMap.id==="ocean"?.09:.07)); showWarning(currentMap.boss.toUpperCase()+" RUSHED FORWARD!"); return; } if(["volcano","graveyard","ruins","abyss","candy"].includes(currentMap.id)){ const types={ volcano:["tank","fast","fast"], graveyard:["invisible","regenerator","fast"], ruins:["armored","armored","tank"], abyss:["splitter","invisible","fast"], candy:["splitter","splitter"] }[currentMap.id]; types.forEach((type,index)=>{ enemies.push( createEnemy( type, Math.max(0,boss.progress-.03-index*.02), false ) ); }); showWarning(currentMap.boss.toUpperCase()+" SUMMONED MINIONS!"); return; } if(["city","factory","jungle","storm"].includes(currentMap.id)){ enemies.forEach(enemy=>{ if(enemy.dead||enemy.boss)return; if(currentMap.id==="jungle"){ enemy.health=Math.min(enemy.maxHealth,enemy.health+enemy.maxHealth*.2); }else if(currentMap.id==="factory"){ enemy.shield+=2; }else if(currentMap.id==="storm"){ enemy.baseSpeed*=1.08; }else{ enemy.health=Math.min(enemy.maxHealth,enemy.health+enemy.maxHealth*.15); enemy.baseSpeed*=1.05; } }); showWarning(currentMap.boss.toUpperCase()+" BOOSTED THE HORDE!"); } } function updateEnemies(delta){ for(const enemy of enemies){ if(enemy.dead)continue; if(enemy.progress<0){ enemy.progress+=enemy.baseSpeed*delta; continue; } if(enemy.poisonUntil>gameTime){ enemy.poisonTimer+=delta; if(enemy.poisonTimer>=.5){ enemy.poisonTimer=0; damageEnemy(enemy,enemy.poisonDamage,{ignoreArmor:true}); } } if(enemy.burnUntil>gameTime){ enemy.burnTimer+=delta; if(enemy.burnTimer>=.45){ enemy.burnTimer=0; damageEnemy(enemy,enemy.burnDamage,{}); } } if(enemy.type==="regenerator"){ enemy.health=Math.min( enemy.maxHealth, enemy.health+enemy.maxHealth*.012*delta ); } if(enemy.type==="healer"){ enemy.healTimer+=delta; if(enemy.healTimer>=1){ enemy.healTimer=0; const healerPosition=getPathPosition(enemy.progress); enemies.forEach(other=>{ if(other.dead||other.progress<0)return; const position=getPathPosition(other.progress); if(Math.hypot(position.x-healerPosition.x,position.y-healerPosition.y)<=130){ other.health=Math.min(other.maxHealth,other.health+other.maxHealth*.07); } }); } } if(enemy.boss){ useBossPower(enemy); bossPanel.style.display="block"; bossName.textContent=currentMap.boss+" — "+currentMap.bossPower; bossHealthFill.style.width=Math.max(0,enemy.health/enemy.maxHealth*100)+"%"; } let speed=enemy.baseSpeed; if(enemy.freezeUntil>gameTime){ speed=0; }else if(enemy.slowUntil>gameTime){ speed*=enemy.slowAmount; } enemy.progress+=speed*delta; if(enemy.progress>=1){ enemy.dead=true; health-=enemy.leakDamage; if(enemy.boss)bossPanel.style.display="none"; if(health<=0){ health=0; endGame(); return; } } } enemies=enemies.filter(enemy=>!enemy.dead); } function finishWave(){ waveRunning=false; effects=[]; let income=0; let healing=0; towers.forEach(tower=>{ income+=tower.income||0; healing+=tower.heal||0; }); money+=income; health=Math.min(MAX_HEALTH,health+healing); const clearedWave=wave; if(clearedWave===10){ completeMap(); return; } wave++; if(wave>=50)completeMission("wave50"); let text="Wave cleared!"; if(income>0)text+=" Towers produced $"+Math.round(income)+"."; if(healing>0)text+=" Humans restored "+healing+" health."; setMessage(text); updateUI(); if(autoStart)scheduleAutoStart(); } function completeMap(){ const settings=difficultyData(); account.zombieBucks+=settings.bucks; account.totalRound10Wins++; account.completedMaps[currentMap.id]=true; const index=maps.findIndex(map=>map.id===currentMap.id); let unlockText=""; if(index===account.unlockedMapCount-1&&account.unlockedMapCount<maps.length){ account.unlockedMapCount++; unlockText=" You unlocked "+maps[account.unlockedMapCount-1].name+"!"; } if(!runUsedFarm)completeMission("noFarm"); if(runOnlyHumans&&runPlacedTower)completeMission("humanOnly"); if(currentDifficulty==="hard")completeMission("hardVictory"); saveAccount(false); paused=true; resultTitle.textContent="Map Complete!"; resultText.textContent= "You beat wave 10 on "+ settings.name+ ", defeated "+ currentMap.boss+ ", and earned "+ settings.bucks+ " Zombie-Bucks."+ unlockText; continueButton.style.display="inline-flex"; resultOverlay.classList.add("visible"); updateUI(); } function endGame(){ gameActive=false; waveRunning=false; paused=true; bossPanel.style.display="none"; resultTitle.textContent="Game Over"; resultText.textContent= "You reached wave "+ wave+ " on "+ currentMap.name+ " using "+ difficultyData().name+ " difficulty."; continueButton.style.display="none"; resultOverlay.classList.add("visible"); setMessage("Game over."); updateUI(); } function totalUpgradeCount(tower){ return tower.upgrades.damage+tower.upgrades.range+tower.upgrades.speed; } function damageUpgradeCost(tower){ return 100+tower.upgrades.damage*65; } function rangeUpgradeCost(tower){ return 120+tower.upgrades.range*70; } function speedUpgradeCost(tower){ return 150+tower.upgrades.speed*80; } function isIncomeTower(tower){ return tower.type==="farm"||tower.type==="recycler"; } function showTowerPanel(tower){ if(!tower||!towers.includes(tower)){ hideTowerPanel(); return; } selectedTower=tower; towerPanel.style.display="block"; selectedTowerName.textContent= tower.icon+ " "+ tower.name+ (tower.evolution?" — "+tower.evolution.name:""); towerInfo.innerHTML=` Damage: ${Math.round(tower.damage)}<br> Range: ${Math.round(tower.range)}<br> Attack Speed: ${tower.rate.toFixed(2)} per second<br> Income: $${Math.round(tower.income||0)} per wave<br> Targeting: ${targetingNames[tower.targeting]}<br> Damage Level: ${tower.upgrades.damage}/5<br> Range Level: ${tower.upgrades.range}/5<br> Speed Level: ${tower.upgrades.speed}/5<br> Evolution: ${tower.evolution?tower.evolution.name:"None"} `; targetButton.style.display=tower.nonAttacking?"none":"block"; targetButton.textContent="Targeting: "+targetingNames[tower.targeting]; if(isIncomeTower(tower)){ damageButton.textContent= tower.upgrades.damage>=5 ?"Income: MAXED" :"Upgrade Income — $"+damageUpgradeCost(tower); }else{ damageButton.textContent= tower.upgrades.damage>=5 ?"Damage: MAXED" :"Upgrade Damage — $"+damageUpgradeCost(tower); } rangeButton.textContent= tower.upgrades.range>=5 ?"Range: MAXED" :"Upgrade Range — $"+rangeUpgradeCost(tower); speedButton.textContent= tower.upgrades.speed>=5 ?"Speed: MAXED" :"Upgrade Speed — $"+speedUpgradeCost(tower); damageButton.disabled= tower.upgrades.damage>=5|| money<damageUpgradeCost(tower)|| tower.type==="waste"; rangeButton.disabled= tower.nonAttacking|| tower.upgrades.range>=5|| money<rangeUpgradeCost(tower); speedButton.disabled= tower.nonAttacking|| tower.upgrades.speed>=5|| money<speedUpgradeCost(tower); sellButton.textContent="Sell Tower — $"+Math.floor(tower.spent*.65); if(tower.evolution){ evolutionArea.innerHTML=` <div class="evolutionCard"> <strong>${tower.evolution.name}</strong> <p>${tower.evolution.description}</p> </div> `; }else if(totalUpgradeCount(tower)>=5){ evolutionArea.innerHTML=` <h3>Choose Evolution</h3> ${(evolutions[tower.type]||[]).map((evolution,index)=>` <div class="evolutionCard"> <strong>${evolution.name}</strong> <p>${evolution.description}</p> <button class="purple" data-evolution="${index}" ${money<EVOLUTION_COST?"disabled":""}> Evolve into ${evolution.name} — ${EVOLUTION_COST} </button> </div> `).join("")} `; evolutionArea.querySelectorAll("button[data-evolution]").forEach(button=>{ button.addEventListener("click",()=>{ evolveTower(tower,Number(button.dataset.evolution)); }); }); }else{ evolutionArea.innerHTML=` <h3>Tower Evolution</h3> <div class="panelInfo"> Purchase five total upgrades to unlock evolution.<br> Progress: ${totalUpgradeCount(tower)} / 5 </div> `; } } function hideTowerPanel(){ selectedTower=null; towerPanel.style.display="none"; } function upgradeDamage(){ const tower=selectedTower; if(!tower||tower.upgrades.damage>=5||tower.type==="waste")return; const cost=damageUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.damage++; if(isIncomeTower(tower)){ tower.income+=tower.type==="farm"?45:25; setMessage(tower.name+" income upgraded to $"+Math.round(tower.income)+" per wave."); }else{ tower.damage*=1.28; tower.poison*=1.15; tower.burn*=1.15; setMessage(tower.name+" damage upgraded."); } showTowerPanel(tower); updateUI(); } function upgradeRange(){ const tower=selectedTower; if(!tower||tower.nonAttacking||tower.upgrades.range>=5)return; const cost=rangeUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.range++; tower.range+=25; setMessage(tower.name+" range upgraded."); showTowerPanel(tower); updateUI(); } function upgradeSpeed(){ const tower=selectedTower; if(!tower||tower.nonAttacking||tower.upgrades.speed>=5)return; const cost=speedUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.speed++; tower.rate*=1.2; setMessage(tower.name+" attack speed upgraded."); showTowerPanel(tower); updateUI(); } function evolveTower(tower,index){ if(tower.evolution||totalUpgradeCount(tower)<5||money<EVOLUTION_COST)return; const evolution=(evolutions[tower.type]||[])[index]; if(!evolution)return; money-=EVOLUTION_COST; tower.spent+=EVOLUTION_COST; tower.evolution=evolution; if(evolution.damage)tower.damage*=evolution.damage; if(evolution.rate)tower.rate*=evolution.rate; if(evolution.range)tower.range+=evolution.range; if(evolution.splash)tower.splash+=evolution.splash; if(evolution.slow!==undefined)tower.slow=evolution.slow; if(evolution.poison)tower.poison=evolution.poison; if(evolution.burn)tower.burn=evolution.burn; if(evolution.chain)tower.chain=evolution.chain; if(evolution.pierce)tower.pierce=evolution.pierce; if(evolution.income)tower.income*=evolution.income; if(evolution.incomeFlat)tower.income+=evolution.incomeFlat; if(evolution.ability)tower.ability=evolution.ability; if(evolution.bossBonus)tower.bossBonus=evolution.bossBonus; if(evolution.eliteBonus)tower.eliteBonus=evolution.eliteBonus; if(evolution.invisibleBonus)tower.invisibleBonus=evolution.invisibleBonus; if(evolution.frozenBonus)tower.frozenBonus=evolution.frozenBonus; if(evolution.critChance)tower.critChance=evolution.critChance; if(evolution.critDamage)tower.critDamage=evolution.critDamage; if(evolution.ignoreArmor)tower.ignoreArmor=true; if(evolution.curse)tower.curse=evolution.curse; if(evolution.bossBuck)tower.bossBuck=evolution.bossBuck; setMessage(tower.name+" evolved into "+evolution.name+" for $"+EVOLUTION_COST+"!"); showWarning("TOWER EVOLVED: "+evolution.name); showTowerPanel(tower); updateUI(); } function activateAbility(id){ const ability=abilities[id]; if(!ability)return; if(!towers.some(tower=>tower.ability===id))return; if((abilityReady[id]||0)>gameTime)return; if(id==="airStrike"){ enemies.forEach(enemy=>{ if(!enemy.dead&&enemy.progress>=0){ damageEnemy(enemy,Math.max(250,enemy.maxHealth*.3),{ignoreArmor:true}); } }); setMessage("Air Strike launched!"); } if(id==="blizzard"){ enemies.forEach(enemy=>{ if(!enemy.dead)enemy.freezeUntil=gameTime+4; }); setMessage("Blizzard froze every enemy."); } if(id==="overdrive"){ overdriveUntil=gameTime+8; setMessage("Overdrive doubled tower speed for eight seconds."); } if(id==="supplies"){ money+=500; setMessage("Emergency Supplies delivered $500."); } if(id==="repair"){ health=Math.min(MAX_HEALTH,health+40); setMessage("Base Repair restored 40 health."); } if(id==="meteor"){ enemies.forEach(enemy=>{ if(!enemy.dead&&enemy.progress>=0){ damageEnemy(enemy,enemy.boss?500:350,{ignoreArmor:true}); } }); setMessage("Meteor strike!"); } abilityReady[id]=gameTime+ability.cooldown; updateUI(); } function showWarning(text){ warning.textContent=text; warning.style.display="block"; clearTimeout(warningTimer); warningTimer=setTimeout(()=>{ warning.style.display="none"; },2300); } function updateUI(){ money=Math.max(0,Math.floor(money)); moneyText.textContent=money; waveText.textContent=wave; bucksText.textContent=account.zombieBucks; mapText.textContent=currentMap ?currentMap.name+" ("+difficultyData().name+")" :"Lobby"; healthText.textContent=Math.ceil(health); const percent=Math.max(0,health/MAX_HEALTH*100); healthFill.style.width=percent+"%"; healthFill.style.background= percent>60?"#2ecc71": percent>30?"#f1c40f": "#e74c3c"; towerBar.querySelectorAll("button[data-tower]").forEach(button=>{ const type=button.dataset.tower; const base=towerTypes[type]; const free=account.freeTowerType===type; button.disabled= !gameActive|| paused|| (!free&&money<base.cost); let name=base.name; if(type==="human"){ name=humanTypes[account.equippedHuman].name+" Human"; } button.textContent= base.icon+ " "+ name+ (free?" (FREE)":" ($"+base.cost+")"); }); const startButton=document.getElementById("startWaveButton"); if(startButton){ startButton.disabled=!gameActive||paused||waveRunning; } abilityBar.querySelectorAll("button[data-ability]").forEach(button=>{ const id=button.dataset.ability; const unlocked=towers.some(tower=>tower.ability===id); const remaining=Math.max(0,Math.ceil((abilityReady[id]||0)-gameTime)); button.disabled=!unlocked||remaining>0||paused||!gameActive; button.textContent= abilities[id].icon+ " "+ abilities[id].name+ ( !unlocked ?" — Locked" :remaining>0 ?" — "+remaining+"s" :"" ); }); if(selectedTower&&towers.includes(selectedTower)){ showTowerPanel(selectedTower); } } function selectTowerAt(x,y){ const tower=[...towers] .reverse() .find(item=>Math.hypot(item.x-x,item.y-y)<=25); if(tower){ showTowerPanel(tower); }else{ hideTowerPanel(); } } function getCanvasPoint(event){ const rect=canvas.getBoundingClientRect(); return{ x:(event.clientX-rect.left)*(WIDTH/rect.width), y:(event.clientY-rect.top)*(HEIGHT/rect.height) }; } canvas.addEventListener("pointermove",event=>{ pointer=getCanvasPoint(event); }); canvas.addEventListener("pointerdown",event=>{ if(!gameActive||paused)return; pointer=getCanvasPoint(event); if(placementType){ if(!validPlacement(pointer.x,pointer.y)){ setMessage("That position is blocked by the path, terrain, or another tower."); return; } placeTower(placementType,pointer.x,pointer.y); return; } selectTowerAt(pointer.x,pointer.y); }); targetButton.addEventListener("click",()=>{ if(!selectedTower)return; const index=targetingModes.indexOf(selectedTower.targeting); selectedTower.targeting=targetingModes[(index+1)%targetingModes.length]; showTowerPanel(selectedTower); }); damageButton.addEventListener("click",upgradeDamage); rangeButton.addEventListener("click",upgradeRange); speedButton.addEventListener("click",upgradeSpeed); sellButton.addEventListener("click",()=>{ if(!selectedTower)return; const refund=Math.floor(selectedTower.spent*.65); money+=refund; towers=towers.filter(tower=>tower!==selectedTower); setMessage("Tower sold for $"+refund+"."); hideTowerPanel(); updateUI(); }); closeTowerButton.addEventListener("click",hideTowerPanel); continueButton.addEventListener("click",()=>{ resultOverlay.classList.remove("visible"); paused=false; wave=11; setMessage("Endless mode started at wave 11."); updateUI(); if(autoStart)scheduleAutoStart(); }); resultLobbyButton.addEventListener("click",()=>{ continueButton.style.display="inline-flex"; returnToLobby("Choose your next map and difficulty."); }); document.addEventListener("keydown",event=>{ if(event.key==="Escape"){ placementType=null; hideTowerPanel(); setMessage("Selection canceled."); } if(event.key===" "&&gameActive&&!waveRunning&&!paused){ event.preventDefault(); startWave(); } }); document.getElementById("humanShopButton").addEventListener("click",()=>{ renderHumans(); humanShop.classList.add("visible"); }); document.getElementById("closeHumanShop").addEventListener("click",()=>{ humanShop.classList.remove("visible"); renderLobby(); }); document.getElementById("missionsButton").addEventListener("click",()=>{ renderMissions(); missionsPage.classList.add("visible"); }); document.getElementById("closeMissions").addEventListener("click",()=>{ missionsPage.classList.remove("visible"); }); document.getElementById("rollTowerButton").addEventListener("click",rollFreeTower); document.getElementById("cashBoostButton").addEventListener("click",buyCashBoost); document.getElementById("permDamageButton").addEventListener("click",buyPermanentDamage); document.getElementById("permCashButton").addEventListener("click",buyPermanentCash); document.getElementById("saveButton").addEventListener("click",()=>saveAccount(true)); document.getElementById("downloadButton").addEventListener("click",downloadSave); document.getElementById("saveUpload").addEventListener("change",uploadSave); function drawBackground(){ ctx.fillStyle=currentMap?currentMap.background:"#263238"; ctx.fillRect(0,0,WIDTH,HEIGHT); if(currentMap&&["space","moon","abyss"].includes(currentMap.id)){ ctx.fillStyle="#fff"; for(let i=0;i<65;i++){ ctx.fillRect((i*173)%WIDTH,(i*97)%HEIGHT,2,2); } } if(currentMap&&currentMap.id==="storm"){ ctx.strokeStyle="#fff17688"; ctx.lineWidth=3; for(let i=0;i<8;i++){ const x=(i*181+gameTime*25)%WIDTH; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-25,55); ctx.lineTo(x+5,90); ctx.stroke(); } } } function drawPath(){ if(!currentMap)return; const path=currentMap.path; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); ctx.moveTo(path[0][0],path[0][1]); for(let i=1;i<path.length;i++){ ctx.lineTo(path[i][0],path[i][1]); } ctx.strokeStyle="#0004"; ctx.lineWidth=94; ctx.stroke(); ctx.strokeStyle=currentMap.road; ctx.lineWidth=82; ctx.stroke(); ctx.setLineDash([18,18]); ctx.strokeStyle=currentMap.line; ctx.lineWidth=8; ctx.stroke(); ctx.setLineDash([]); } function drawObstacles(){ if(!currentMap)return; currentMap.obstacles.forEach(object=>{ ctx.fillStyle=object.color; ctx.strokeStyle="#0006"; ctx.lineWidth=5; if(object.r){ ctx.beginPath(); ctx.arc(object.x,object.y,object.r,0,Math.PI*2); ctx.fill(); ctx.stroke(); }else{ ctx.fillRect( object.x-object.w/2, object.y-object.h/2, object.w, object.h ); ctx.strokeRect( object.x-object.w/2, object.y-object.h/2, object.w, object.h ); } }); } function drawTowers(){ towers.forEach(tower=>{ if(selectedTower===tower&&tower.range>0){ ctx.beginPath(); ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2); ctx.fillStyle="#ffffff18"; ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.setLineDash([8,8]); ctx.stroke(); ctx.setLineDash([]); } ctx.beginPath(); ctx.arc(tower.x,tower.y,21,0,Math.PI*2); ctx.fillStyle=tower.color; ctx.fill(); ctx.strokeStyle=tower.evolution?"#ffeb3b":"#0008"; ctx.lineWidth=tower.evolution?5:3; ctx.stroke(); ctx.font="22px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(tower.icon,tower.x,tower.y); if(tower.stunnedUntil>gameTime){ ctx.font="18px Arial"; ctx.fillText("💫",tower.x+18,tower.y-18); } }); } function enemyLabel(enemy){ if(enemy.boss)return"BOSS"; return{ fast:"F", tank:"T", armored:"A", regenerator:"R", shielded:"S", invisible:"I", healer:"+", splitter:"2" }[enemy.type]||""; } function drawEnemies(){ enemies.forEach(enemy=>{ if(enemy.dead||enemy.progress<0)return; const position=getPathPosition(enemy.progress); ctx.save(); if(enemy.type==="invisible")ctx.globalAlpha=.55; ctx.beginPath(); ctx.arc(position.x,position.y,enemy.radius,0,Math.PI*2); ctx.fillStyle=enemy.color; ctx.fill(); ctx.strokeStyle=enemy.boss?"#fff":"#1b5e20"; ctx.lineWidth=enemy.boss?5:3; ctx.stroke(); if(enemy.poisonUntil>gameTime){ ctx.strokeStyle="#76ff03"; ctx.lineWidth=4; ctx.stroke(); } if(enemy.burnUntil>gameTime){ ctx.strokeStyle="#ff5722"; ctx.lineWidth=4; ctx.stroke(); } if(enemy.freezeUntil>gameTime){ ctx.fillStyle="#b3e5fc88"; ctx.fill(); } if(enemy.shield>0){ ctx.beginPath(); ctx.arc(position.x,position.y,enemy.radius+6,0,Math.PI*2); ctx.strokeStyle="#80d8ff"; ctx.lineWidth=3; ctx.stroke(); } const width=enemy.boss?82:42; const healthPercent=Math.max(0,enemy.health/enemy.maxHealth); ctx.fillStyle="#222"; ctx.fillRect(position.x-width/2,position.y-enemy.radius-13,width,6); ctx.fillStyle= healthPercent>.6?"#2ecc71": healthPercent>.3?"#f1c40f": "#e74c3c"; ctx.fillRect( position.x-width/2, position.y-enemy.radius-13, width*healthPercent, 6 ); const label=enemyLabel(enemy); if(label){ ctx.fillStyle="#fff"; ctx.font=enemy.boss?"bold 11px Arial":"bold 15px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(label,position.x,position.y); } ctx.restore(); }); } function drawEffects(){ effects.forEach(effect=>{ ctx.beginPath(); ctx.moveTo(effect.x1,effect.y1); ctx.lineTo(effect.x2,effect.y2); ctx.strokeStyle=effect.color; ctx.lineWidth=4; ctx.stroke(); }); } function drawPlacement(){ if(!placementType)return; const tower=towerTypes[placementType]; const valid=validPlacement(pointer.x,pointer.y); if(tower.range>0){ ctx.beginPath(); ctx.arc(pointer.x,pointer.y,tower.range,0,Math.PI*2); ctx.fillStyle=valid?"#76ff0322":"#ff174422"; ctx.fill(); ctx.strokeStyle=valid?"#76ff03":"#ff1744"; ctx.lineWidth=3; ctx.setLineDash([8,8]); ctx.stroke(); ctx.setLineDash([]); } ctx.globalAlpha=.8; ctx.beginPath(); ctx.arc(pointer.x,pointer.y,21,0,Math.PI*2); ctx.fillStyle=tower.color; ctx.fill(); ctx.strokeStyle=valid?"#76ff03":"#ff1744"; ctx.lineWidth=4; ctx.stroke(); ctx.globalAlpha=1; ctx.font="22px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(tower.icon,pointer.x,pointer.y); } function draw(){ drawBackground(); if(!currentMap){ ctx.fillStyle="#fff"; ctx.font="bold 36px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("Choose a map and difficulty",WIDTH/2,HEIGHT/2); return; } drawPath(); drawObstacles(); drawTowers(); drawEnemies(); drawEffects(); drawPlacement(); } function gameLoop(timestamp){ const rawDelta=Math.min(.05,(timestamp-lastTimestamp)/1000||0); lastTimestamp=timestamp; if(gameActive&&!paused&&waveRunning){ const delta=rawDelta*speedMultiplier; gameTime+=delta; updateEnemies(delta); updateTowers(); effects=effects.filter(effect=>effect.expires>gameTime); if(waveRunning&&enemies.length===0){ finishWave(); } }else if(gameActive&&!paused){ gameTime+=rawDelta; effects=effects.filter(effect=>effect.expires>gameTime); } if(timestamp>=nextUiUpdate){ nextUiUpdate=timestamp+250; updateUI(); } draw(); requestAnimationFrame(gameLoop); } buildGameButtons(); loadAccount(); renderLobby(); renderHumans(); renderMissions(); updateUI(); requestAnimationFrame(gameLoop); </script> </body> </html>
+@media(max-width:760px){ #towerPanel{position:fixed;left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:55vh} .mapCard,.humanCard,.missionCard{width:94vw} .overlay h1{font-size:30px} #towerBar button,#controlBar button,#abilityBar button{font-size:12px;padding:7px 8px} } </style></head> <body> <div id="ui"> <div class="stat">Money: $<span id="moneyText">260</span></div> <div class="stat">Wave: <span id="waveText">1</span></div> <div class="stat">Zombie-Bucks: <span id="bucksText">0</span></div> <div class="stat">Map: <span id="mapText">Lobby</span></div> <div id="healthBox" class="stat"> Health: <span id="healthText">150</span> <div id="healthBar"><div id="healthFill"></div></div> </div> <div id="message">Choose a map and difficulty to begin.</div> </div> <div id="towerBar" class="hidden"></div> <div id="controlBar" class="hidden"></div> <div id="abilityBar" class="hidden"></div> <div id="gameWrap"> <canvas id="gameCanvas" width="1200" height="600"></canvas> <div id="bossPanel"> <div id="bossName">Boss</div> <div id="bossHealthBar"><div id="bossHealthFill"></div></div> </div> <div id="warning"></div> <div id="towerPanel"> <h2 id="selectedTowerName">Tower</h2> <div id="towerInfo" class="panelInfo"></div> <button id="targetButton" class="purple">Targeting: First</button> <button id="damageButton">Upgrade Damage</button> <button id="rangeButton">Upgrade Range</button> <button id="speedButton">Upgrade Speed</button> <div id="evolutionArea"></div> <button id="sellButton" class="red">Sell Tower</button> <button id="closeTowerButton" class="dark">Close</button> </div> <div id="resultOverlay"> <div id="resultCard"> <h1 id="resultTitle">Map Complete!</h1> <p id="resultText"></p> <div id="resultButtons"> <button id="continueButton" class="green">Keep Playing</button> <button id="resultLobbyButton" class="purple">Back to Lobby</button> </div> </div> </div> </div> <div id="lobby" class="overlay visible"> <h1>Zombie Defense V5: Boss Invasion</h1> <p class="overlayIntro">Defeat bosses, evolve towers, choose your difficulty, and complete permanent missions.</p> <div id="lobbyStats"> <div id="statGrid"> <div class="lobbyStat">Zombie-Bucks: <span id="lobbyBucks">0</span></div> <div class="lobbyStat">Unlocked Maps: <span id="unlockedText">1</span> / <span id="totalMapsText">16</span></div> <div class="lobbyStat">Human: <span id="humanText">🧑 Survivor</span></div> <div class="lobbyStat">Free Tower: <span id="freeTowerText">None</span></div> <div class="lobbyStat">Cash Boosts: <span id="cashBoostText">0</span></div> <div class="lobbyStat">Permanent Damage: +<span id="permDamageText">0</span>%</div> <div class="lobbyStat">Permanent Cash: +$<span id="permCashText">0</span></div> <div class="lobbyStat">Total Eliminations: <span id="killsText">0</span></div> </div> <div id="lobbyButtons"> <button id="humanShopButton" class="purple">Humans Shop</button> <button id="missionsButton" class="blue">Missions</button> <button id="rollTowerButton">Roll Free Tower — 100 Zombie-Bucks</button> <button id="cashBoostButton">Buy +$150 Next Run — 50 Zombie-Bucks</button> <button id="permDamageButton">Permanent Damage</button> <button id="permCashButton">Permanent Cash</button> <button id="saveButton" class="dark">Save Account</button> <button id="downloadButton" class="dark">Download Save</button> <label class="fileButton"> Upload Save <input id="saveUpload" type="file" accept=".json"> </label> </div> </div> <h2 class="sectionTitle">Choose a Map and Difficulty</h2> <div id="mapGrid" class="cardGrid"></div> </div> <div id="humanShop" class="overlay"> <h1>Humans Shop</h1> <p class="overlayIntro">Purchase humans permanently and equip one for your Human towers.</p> <div id="humanGrid" class="cardGrid"></div> <button id="closeHumanShop" class="purple">Back to Lobby</button> </div> <div id="missionsPage" class="overlay"> <h1>Missions</h1> <p class="overlayIntro">Rewards are given automatically when each mission is completed.</p> <div id="missionGrid" class="cardGrid"></div> <button id="closeMissions" class="purple">Back to Lobby</button> </div> <script> "use strict"; const canvas=document.getElementById("gameCanvas"); const ctx=canvas.getContext("2d"); const moneyText=document.getElementById("moneyText"); const waveText=document.getElementById("waveText"); const bucksText=document.getElementById("bucksText"); const mapText=document.getElementById("mapText"); const healthText=document.getElementById("healthText"); const healthFill=document.getElementById("healthFill"); const message=document.getElementById("message"); const towerBar=document.getElementById("towerBar"); const controlBar=document.getElementById("controlBar"); const abilityBar=document.getElementById("abilityBar"); const lobby=document.getElementById("lobby"); const humanShop=document.getElementById("humanShop"); const missionsPage=document.getElementById("missionsPage"); const mapGrid=document.getElementById("mapGrid"); const humanGrid=document.getElementById("humanGrid"); const missionGrid=document.getElementById("missionGrid"); const bossPanel=document.getElementById("bossPanel"); const bossName=document.getElementById("bossName"); const bossHealthFill=document.getElementById("bossHealthFill"); const warning=document.getElementById("warning"); const towerPanel=document.getElementById("towerPanel"); const selectedTowerName=document.getElementById("selectedTowerName"); const towerInfo=document.getElementById("towerInfo"); const evolutionArea=document.getElementById("evolutionArea"); const targetButton=document.getElementById("targetButton"); const damageButton=document.getElementById("damageButton"); const rangeButton=document.getElementById("rangeButton"); const speedButton=document.getElementById("speedButton"); const sellButton=document.getElementById("sellButton"); const closeTowerButton=document.getElementById("closeTowerButton"); const resultOverlay=document.getElementById("resultOverlay"); const resultTitle=document.getElementById("resultTitle"); const resultText=document.getElementById("resultText"); const continueButton=document.getElementById("continueButton"); const resultLobbyButton=document.getElementById("resultLobbyButton"); const WIDTH=1200; const HEIGHT=600; const MAX_HEALTH=150; const SAVE_KEY="zombieDefenseV5BossInvasionExpanded"; const EVOLUTION_COST=1000; const OLD_SAVE_KEYS=[ "zombieDefenseV4Fixed", "zombieDefenseAccountSaveV6", "zombieDefenseAccountSaveV5", "zombieDefenseAccountSaveV4", "zombieDefenseAccountSaveV3", "zombieDefenseAccountSaveV2" ]; const targetingModes=["first","last","strong","weak"]; const targetingNames={ first:"First", last:"Last", strong:"Most Health", weak:"Least Health" }; const difficulties={ easy:{ name:"Easy", bucks:5, health:0.8, speed:0.9, count:0.9, leak:0.75, cashReward:0.9, startingCash:1.15 }, medium:{ name:"Medium", bucks:10, health:1, speed:1, count:1, leak:1, cashReward:1, startingCash:1 }, hard:{ name:"Hard", bucks:20, health:1.55, speed:1.18, count:1.3, leak:1.5, cashReward:1.25, startingCash:0.85 } }; const humanTypes={ survivor:{ name:"Survivor", icon:"🧑", cost:0, description:"Balanced damage, range, and attack speed.", damage:38, range:170, rate:2.5 }, medic:{ name:"Medic", icon:"🧑‍⚕️", cost:75, description:"Restores 3 base health after every cleared wave.", damage:22, range:160, rate:2, heal:3 }, engineer:{ name:"Engineer", icon:"👷", cost:110, description:"Boosts nearby tower damage by 15%.", damage:27, range:165, rate:2.2, auraDamage:.15, auraRange:155 }, pyro:{ name:"Pyro", icon:"🧑‍🚒", cost:150, description:"Burns zombies and deals splash damage.", damage:31, range:155, rate:1.9, splash:45, burn:9 }, commander:{ name:"Commander", icon:"🪖", cost:220, description:"Boosts nearby attack speed and earns $20 each wave.", damage:45, range:185, rate:2.1, auraSpeed:.15, auraRange:175, income:20 } }; const towerTypes={ ranger:{name:"Ranger",icon:"🏹",cost:180,color:"#2e7d32",damage:35,range:155,rate:2.5}, mage:{name:"Mage",icon:"🔮",cost:230,color:"#7e57c2",damage:48,range:165,rate:1.65,splash:40}, cannon:{name:"Cannon",icon:"💣",cost:280,color:"#455a64",damage:80,range:140,rate:1.15,splash:60}, ice:{name:"ICE",icon:"(-)",cost:200,color:"#039be5",damage:1,range:175,rate:10,slow:10}, sniper:{name:"Sniper",icon:"🎯",cost:300,color:"#6d4c41",damage:75,range:900,rate:0.25,detectInvisible:true}, ninja:{name:"Ninja",icon:"🥷",cost:400,color:"#212121",damage:28,range:245,rate:3.5,detectInvisible:true}, laser:{name:"Laser",icon:"🔴",cost:480,color:"#c62828",damage:30,range:190,rate:2.8,pierce:5}, poison:{name:"Poison",icon:"☠️",cost:240,color:"#689f38",damage:18,range:155,rate:1.9,poison:8}, glue:{name:"Glue",icon:"🍯",cost:600,color:"#fbc02d",damage:3,range:180,rate:2.2,slow:.35}, farm:{name:"Farm",icon:"💰",cost:700,color:"#ffb300",damage:0,range:0,rate:0,income:55,nonAttacking:true}, fire:{name:"Fire",icon:"🔥",cost:300,color:"#e65100",damage:34,range:160,rate:1.9,splash:45,burn:10}, lightning:{name:"Lightning",icon:"⚡",cost:360,color:"#fdd835",damage:42,range:190,rate:1.5,chain:3}, boomerang:{name:"Boomerang",icon:"🪃",cost:220,color:"#ef6c00",damage:28,range:180,rate:2.8,pierce:3}, human:{name:"Human",icon:"🧑",cost:250,color:"#8d6e63",damage:38,range:170,rate:2.5}, waste:{name:"Waste Your Money",icon:"💸",cost:2500,color:"#7f0000",damage:50,range:1000,rate:1000}, shotgun:{name:"Shotgunner",icon:"🔫",cost:270,color:"#795548",damage:30,range:135,rate:1.55,pierce:5,splash:30}, mortar:{name:"Mortar",icon:"🧨",cost:420,color:"#37474f",damage:115,range:330,rate:.72,splash:105}, minigun:{name:"Minigun",icon:"⚙️",cost:680,color:"#546e7a",damage:20,range:155,rate:5.6}, acid:{name:"Acid",icon:"🧪",cost:310,color:"#8bc34a",damage:20,range:170,rate:2.1,poison:13,splash:35}, crystal:{name:"Jeweler",icon:"💎",cost:390,color:"#00bcd4",damage:30,range:240,rate:1.3,chain:3,slow:.25}, drone:{name:"Drone",icon:"🛸",cost:350,color:"#5c6bc0",damage:38,range:285,rate:3,detectInvisible:true}, saw:{name:"Sawblade",icon:"🪚",cost:330,color:"#9e9e9e",damage:42,range:175,rate:2.4,pierce:6}, recycler:{name:"Recycler",icon:"♻️",cost:540,color:"#00897b",damage:27,range:165,rate:1.8,poison:5,income:32} }; const evolutions={ ranger:[ {id:"machine",name:"Machine Gunner",description:"Doubles attack speed and unlocks Overdrive.",damage:1.3,rate:2,range:25,ability:"overdrive"}, {id:"archer",name:"Elite Archer",description:"Heavy damage, range, and piercing arrows.",damage:2,rate:.85,range:100,pierce:8} ], mage:[ {id:"storm",name:"Storm Wizard",description:"Chains attacks and unlocks Blizzard.",damage:1.5,range:50,chain:6,ability:"blizzard"}, {id:"necromancer",name:"Necromancer",description:"Curses enemies so they take more damage.",damage:1.45,range:60,curse:.3} ], cannon:[ {id:"missile",name:"Missile Launcher",description:"Extreme range and unlocks Air Strike.",damage:1.8,range:180,splash:60,ability:"airStrike"}, {id:"artillery",name:"Heavy Artillery",description:"Slow, devastating attacks with a massive blast.",damage:3,rate:.55,range:75,splash:120} ], ice:[ {id:"blizzard",name:"Blizzard Tower",description:"Freezes groups and unlocks Blizzard.",damage:1.6,range:75,splash:90,slow:.2,ability:"blizzard"}, {id:"deepFreeze",name:"Deep Freeze",description:"Almost stops enemies and hurts slowed targets.",damage:2,range:50,slow:.1,frozenBonus:2} ], sniper:[ {id:"deadeye",name:"Deadeye",description:"Deals massive damage to bosses and elites.",damage:2.1,bossBonus:2,eliteBonus:2}, {id:"railgun",name:"Railgunner",description:"Shots pierce up to ten zombies.",damage:1.7,rate:1.15,pierce:10} ], ninja:[ {id:"shadow",name:"Shadow Master",description:"Very fast attacks with invisible bonus damage.",damage:1.6,rate:1.8,invisibleBonus:2}, {id:"assassin",name:"Assassin",description:"Has a chance to deal triple damage.",damage:1.8,critChance:.25,critDamage:3} ], laser:[ {id:"plasma",name:"Plasma Beam",description:"Ignores armor and pierces many enemies.",damage:1.8,range:80,pierce:12,ignoreArmor:true}, {id:"deathRay",name:"Death Ray",description:"Massive damage against bosses.",damage:2.2,range:50,bossBonus:1.8} ], poison:[ {id:"toxic",name:"Toxic Cloud",description:"Powerful poison spreads through a large area.",damage:1.5,range:60,splash:100,poison:20}, {id:"plague",name:"Plague Doctor",description:"Poison ignores armor and weakens enemies.",damage:1.7,range:70,poison:28,curse:.2,ignoreArmor:true} ], glue:[ {id:"superGlue",name:"Super Glue",description:"Almost completely stops enemies.",damage:5,range:80,slow:.08,curse:.2}, {id:"glueStorm",name:"Glue Storm",description:"Covers large groups in glue.",damage:3,range:120,splash:140,slow:.2} ], farm:[ {id:"megaFarm",name:"Mega Farm",description:"Triples income and unlocks Emergency Supplies.",income:3,ability:"supplies"}, {id:"buckFactory",name:"Zombie-Bucks Factory",description:"Doubles income and earns a Buck after bosses.",income:2,bossBuck:1} ], fire:[ {id:"inferno",name:"Inferno",description:"Massive burn damage and unlocks Meteor.",damage:1.8,range:60,splash:90,burn:28,ability:"meteor"}, {id:"flamethrower",name:"Flamethrower",description:"Rapid attacks that burn groups.",damage:1.3,rate:2.2,range:40,splash:55,burn:18} ], lightning:[ {id:"thunder",name:"Thunder God",description:"Chains through up to twelve enemies.",damage:2,range:80,chain:12}, {id:"tesla",name:"Tesla Coil",description:"Extremely fast chain lightning.",damage:1.5,rate:2,range:50,chain:7} ], boomerang:[ {id:"glaive",name:"Glaive Master",description:"Pierces up to twelve zombies.",damage:2,range:60,pierce:12}, {id:"ricochet",name:"Ricochet Master",description:"Rapidly bounces between enemies.",damage:1.6,rate:1.6,range:70,chain:8} ], human:[ {id:"guardian",name:"Guardian",description:"Powerful defender that unlocks Base Repair.",damage:1.7,range:60,ability:"repair"}, {id:"hero",name:"Hero",description:"Critical hits and extra boss damage.",damage:2.2,range:70,critChance:.2,critDamage:2.5,bossBonus:1.6} ], waste:[ {id:"goldTrash",name:"Golden Trash",description:"It now produces one dollar per wave.",incomeFlat:1}, {id:"badInvestment",name:"Terrible Investment",description:"Still does absolutely nothing."} ], shotgun:[ {id:"breacher",name:"Zombie Breacher",description:"Fires huge piercing blasts.",damage:2.1,range:45,pierce:12,splash:55}, {id:"autoShotgun",name:"Auto Shotgun",description:"Rapidly fires wide shotgun bursts.",damage:1.45,rate:2.2,pierce:8,splash:45} ], mortar:[ {id:"nuclear",name:"Nuclear Mortar",description:"Massive explosions that ignore armor.",damage:2.4,splash:165,ignoreArmor:true}, {id:"rapidMortar",name:"Rapid Mortar",description:"Fires shells much faster.",damage:1.5,rate:2.1,range:100,splash:80} ], minigun:[ {id:"gatling",name:"Gatling Fortress",description:"Extreme firing speed and range.",damage:1.55,rate:1.9,range:85}, {id:"heavyRounds",name:"Heavy Rounds",description:"Powerful rounds pierce armored hordes.",damage:2.3,pierce:5,ignoreArmor:true} ], acid:[ {id:"corrosive",name:"Corrosive Reactor",description:"Armor-melting acid covers large groups.",damage:1.7,poison:30,splash:105,curse:.25,ignoreArmor:true}, {id:"biohazard",name:"Biohazard Lab",description:"Fast attacks spread deadly poison.",damage:1.5,rate:1.8,poison:38,chain:5} ], crystal:[ {id:"timeCrystal",name:"Time Crystal",description:"Powerful slowing chains affect entire groups.",damage:1.7,range:80,chain:10,slow:.28}, {id:"prism",name:"Prism Cannon",description:"Crystal beams pierce and chain.",damage:2.1,pierce:8,chain:7} ], drone:[ {id:"swarm",name:"Drone Swarm",description:"A high-speed invisible-detecting attack swarm.",damage:1.5,rate:2,range:70,invisibleBonus:2}, {id:"bomber",name:"Bomber Drone",description:"Drops powerful area explosives.",damage:2.2,rate:.8,splash:100,bossBonus:1.5} ], saw:[ {id:"shredder",name:"Horde Shredder",description:"Sawblades tear through huge lines.",damage:1.9,rate:1.5,pierce:15}, {id:"chainsaw",name:"Chainsaw Launcher",description:"Heavy saws ignore armor.",damage:2.5,range:65,pierce:8,ignoreArmor:true} ], recycler:[ {id:"megaRecycler",name:"Mega Recycler",description:"Trades dmg and posion for more money",damage:0.5,income:10,poison:15}, {id:"scrapCannon",name:"Scrap Cannon",description:"Fires piercing scrap while producing cash.",damage:2.2,pierce:9,income:1.8,range:60} ] }; const abilities={ airStrike:{name:"Air Strike",icon:"🚀",cooldown:35}, blizzard:{name:"Blizzard",icon:"🌨️",cooldown:30}, overdrive:{name:"Overdrive",icon:"⚙️",cooldown:32}, supplies:{name:"Emergency Supplies",icon:"📦",cooldown:45}, repair:{name:"Base Repair",icon:"🛠️",cooldown:40}, meteor:{name:"Meteor",icon:"☄️",cooldown:38} }; const maps = [ { id: "grass", name: "Grasslands Crossroads", recommended: "Easy", background: "#58a63b", road: "#c49b63", line: "#8d6338", boss: "Giant Brute", bossColor: "#33691e", bossPower: "Tower Slam", description: "A beginner-friendly crossroads with ponds creating clear short-range and long-range tower zones.", path: [ [0, 300], [130, 300], [210, 180], [360, 180], [430, 300], [360, 420], [210, 420], [150, 330], [300, 300], [480, 300], [580, 150], [730, 150], [810, 300], [730, 450], [580, 450], [520, 330], [720, 300], [920, 300], [1020, 200], [1200, 200] ], obstacles: [ {x: 285, y: 300, r: 58, color: "#0277bd"}, {x: 655, y: 300, r: 62, color: "#0288d1"}, {x: 475, y: 80, r: 48, color: "#2e7d32"}, {x: 475, y: 520, r: 48, color: "#2e7d32"}, {x: 930, y: 420, w: 120, h: 90, color: "#5d4037"} ] }, { id: "ice", name: "Frozen River", recommended: "Medium", background: "#81d4fa", road: "#e1f5fe", line: "#4fc3f7", boss: "Frost King", bossColor: "#0277bd", bossPower: "Tower Freeze", description: "Two frozen lakes split the battlefield into risky central platforms and safer outer firing lanes.", path: [ [0, 120], [180, 120], [250, 230], [180, 340], [250, 470], [430, 470], [500, 360], [430, 250], [500, 120], [690, 120], [760, 230], [690, 350], [760, 485], [930, 485], [1000, 360], [930, 245], [1010, 120], [1200, 120] ], obstacles: [ {x: 335, y: 295, r: 80, color: "#b3e5fc"}, {x: 600, y: 330, r: 88, color: "#e1f5fe"}, {x: 855, y: 290, r: 78, color: "#b3e5fc"}, {x: 105, y: 480, r: 55, color: "#4fc3f7"}, {x: 1100, y: 475, r: 55, color: "#4fc3f7"} ] }, { id: "desert", name: "Scorpion Canyon", recommended: "Medium", background: "#d9a441", road: "#d18b3f", line: "#8d5524", boss: "Sand Worm", bossColor: "#8d5524", bossPower: "Burrow", description: "A scorpion-shaped canyon creates a deadly central kill box surrounded by isolated tower plateaus.", path: [ [0, 470], [150, 470], [210, 390], [170, 280], [230, 165], [390, 120], [520, 185], [575, 300], [520, 415], [390, 480], [320, 400], [380, 310], [520, 300], [690, 300], [760, 170], [900, 110], [1030, 170], [970, 280], [1040, 400], [1200, 400] ], obstacles: [ {x: 105, y: 215, r: 65, color: "#6d4c41"}, {x: 330, y: 275, r: 60, color: "#5d4037"}, {x: 650, y: 105, r: 72, color: "#6d4c41"}, {x: 650, y: 490, r: 72, color: "#5d4037"}, {x: 865, y: 315, r: 78, color: "#6d4c41"}, {x: 1110, y: 120, w: 90, h: 100, color: "#795548"} ] }, { id: "volcano", name: "Magma Loop", recommended: "Hard", background: "#4e342e", road: "#ff7043", line: "#ffca28", boss: "Magma Titan", bossColor: "#bf360c", bossPower: "Summon Minions", description: "Enemies circle a full volcanic loop before escaping through a narrow final lane.", path: [ [0, 300], [130, 300], [190, 175], [330, 90], [510, 100], [625, 210], [640, 360], [545, 490], [370, 525], [220, 455], [155, 340], [210, 225], [345, 165], [495, 190], [555, 285], [520, 390], [410, 445], [295, 395], [270, 300], [350, 245], [455, 265], [490, 330], [430, 365], [365, 330], [420, 300], [690, 300], [785, 145], [945, 145], [1030, 300], [945, 455], [790, 455], [735, 340], [930, 300], [1200, 300] ], obstacles: [ {x: 400, y: 305, r: 72, color: "#ff3d00"}, {x: 100, y: 105, r: 64, color: "#bf360c"}, {x: 100, y: 505, r: 64, color: "#ff6d00"}, {x: 700, y: 85, r: 58, color: "#ff3d00"}, {x: 700, y: 515, r: 58, color: "#ff6d00"}, {x: 860, y: 300, r: 62, color: "#d84315"}, {x: 1100, y: 130, r: 60, color: "#ff3d00"}, {x: 1100, y: 470, r: 60, color: "#bf360c"} ] }, { id: "swamp", name: "Swamp Serpent", recommended: "Hard", background: "#456b2f", road: "#7d9450", line: "#c5e1a5", boss: "Swamp Queen", bossColor: "#1b5e20", bossPower: "Sticky Fog", description: "A coiled swamp trail repeatedly passes central tower islands while mud blocks easy placement.", path: [ [0, 420], [150, 420], [210, 500], [380, 510], [455, 410], [390, 315], [230, 315], [160, 230], [230, 130], [420, 120], [520, 220], [470, 330], [560, 430], [740, 430], [810, 330], [750, 225], [820, 115], [1010, 115], [1070, 225], [1010, 335], [1080, 445], [1200, 445] ], obstacles: [ {x: 100, y: 160, r: 72, color: "#33691e"}, {x: 315, y: 215, r: 60, color: "#1b5e20"}, {x: 350, y: 415, r: 55, color: "#4e342e"}, {x: 620, y: 295, r: 82, color: "#33691e"}, {x: 900, y: 300, r: 68, color: "#1b5e20"}, {x: 1120, y: 110, r: 62, color: "#4e342e"} ] }, { id: "city", name: "Dead City Grid", recommended: "Hard", background: "#607d8b", road: "#424242", line: "#fafafa", boss: "Zombie General", bossColor: "#263238", bossPower: "Rally Horde", description: "A city grid uses sharp turns, repeated intersections, and rooftop-sized placement pockets.", path: [ [0, 100], [180, 100], [180, 250], [350, 250], [350, 100], [530, 100], [530, 420], [350, 420], [350, 520], [700, 520], [700, 350], [610, 350], [610, 210], [820, 210], [820, 90], [1010, 90], [1010, 270], [890, 270], [890, 450], [1080, 450], [1080, 330], [1200, 330] ], obstacles: [ {x: 65, y: 220, w: 95, h: 155, color: "#263238"}, {x: 235, y: 330, w: 95, h: 160, color: "#37474f"}, {x: 390, y: 285, w: 115, h: 105, color: "#263238"}, {x: 560, y: 455, w: 110, h: 55, color: "#37474f"}, {x: 685, y: 80, w: 105, h: 110, color: "#263238"}, {x: 740, y: 375, w: 120, h: 110, color: "#37474f"}, {x: 900, y: 105, w: 90, h: 135, color: "#263238"}, {x: 1090, y: 100, w: 90, h: 160, color: "#37474f"} ] }, { id: "space", name: "Orbital Collision", recommended: "Hard", background: "#101044", road: "#7e57c2", line: "#d1c4e9", boss: "Void Monster", bossColor: "#4a148c", bossPower: "Teleport", description: "The route completes an orbital ring, cuts through its center, and launches toward the exit.", path: [ [0, 300], [150, 300], [215, 165], [370, 80], [555, 100], [675, 220], [690, 365], [585, 500], [400, 530], [235, 450], [170, 330], [245, 215], [390, 145], [545, 175], [610, 285], [560, 390], [425, 445], [300, 380], [285, 285], [380, 225], [500, 260], [530, 330], [445, 370], [390, 315], [470, 300], [760, 300], [850, 120], [1020, 120], [1090, 300], [1020, 485], [850, 485], [790, 350], [990, 300], [1200, 300] ], obstacles: [ {x: 430, y: 300, r: 68, color: "#000000"}, {x: 105, y: 105, r: 62, color: "#1a0033"}, {x: 105, y: 505, r: 62, color: "#000000"}, {x: 720, y: 100, r: 65, color: "#1a0033"}, {x: 720, y: 500, r: 65, color: "#000000"}, {x: 925, y: 300, r: 73, color: "#1a0033"}, {x: 1130, y: 100, r: 55, color: "#000000"}, {x: 1130, y: 500, r: 55, color: "#1a0033"} ] }, { id: "candy", name: "Candy Spiral", recommended: "Hard", background: "#f8bbd0", road: "#ff80ab", line: "#fff176", boss: "Sugar Beast", bossColor: "#ad1457", bossPower: "Candy Split", description: "A giant candy spiral repeatedly exposes enemies to a valuable but dangerously small center platform.", path: [ [0, 300], [120, 300], [165, 145], [320, 70], [525, 85], [670, 195], [710, 365], [610, 505], [400, 535], [225, 460], [155, 335], [220, 210], [360, 140], [520, 165], [610, 260], [600, 375], [500, 445], [365, 420], [285, 345], [300, 255], [390, 205], [490, 230], [530, 300], [490, 360], [410, 360], [375, 305], [430, 275], [485, 305], [540, 300], [760, 300], [860, 170], [1000, 170], [1070, 300], [1000, 430], [850, 430], [800, 335], [1000, 300], [1200, 300] ], obstacles: [ {x: 430, y: 305, r: 50, color: "#fff176"}, {x: 90, y: 100, r: 62, color: "#ec407a"}, {x: 90, y: 500, r: 62, color: "#fff176"}, {x: 730, y: 100, r: 65, color: "#ec407a"}, {x: 730, y: 500, r: 65, color: "#fff176"}, {x: 930, y: 300, r: 64, color: "#ec407a"}, {x: 1120, y: 110, r: 55, color: "#fff176"}, {x: 1120, y: 485, r: 55, color: "#ec407a"} ] }, { id: "jungle", name: "Temple Clover", recommended: "Medium", background: "#1b5e20", road: "#8d6e63", line: "#c5e1a5", boss: "Ancient Guardian", bossColor: "#558b2f", bossPower: "Nature Healing", description: "A four-leaf temple route creates overlapping firing lanes around a heavily contested center.", path: [ [0, 300], [160, 300], [235, 180], [365, 150], [450, 230], [400, 300], [450, 370], [365, 450], [235, 420], [180, 320], [300, 300], [440, 300], [520, 180], [650, 150], [740, 230], [680, 300], [740, 370], [650, 455], [520, 420], [470, 320], [600, 300], [800, 300], [880, 165], [1030, 165], [1100, 300], [1030, 440], [875, 440], [825, 335], [1010, 300], [1200, 300] ], obstacles: [ {x: 350, y: 300, r: 58, color: "#33691e"}, {x: 620, y: 300, r: 62, color: "#2e7d32"}, {x: 920, y: 300, r: 60, color: "#33691e"}, {x: 115, y: 110, r: 65, color: "#2e7d32"}, {x: 115, y: 500, r: 65, color: "#33691e"}, {x: 795, y: 90, r: 58, color: "#2e7d32"}, {x: 795, y: 510, r: 58, color: "#33691e"} ] }, { id: "graveyard", name: "Haunted Catacombs", recommended: "Medium", background: "#37474f", road: "#616161", line: "#b0bec5", boss: "Grave Lord", bossColor: "#212121", bossPower: "Raise the Dead", description: "A coffin-shaped route surrounds grave plots before cutting through the haunted central crypt.", path: [ [0, 300], [140, 300], [200, 130], [420, 70], [630, 130], [700, 300], [630, 470], [420, 530], [200, 470], [140, 300], [300, 300], [360, 190], [520, 190], [585, 300], [520, 410], [360, 410], [300, 300], [520, 300], [730, 300], [800, 150], [980, 110], [1080, 240], [1020, 390], [850, 465], [790, 340], [1000, 300], [1200, 300] ], obstacles: [ {x: 255, y: 205, w: 60, h: 90, color: "#212121"}, {x: 255, y: 355, w: 60, h: 90, color: "#263238"}, {x: 420, y: 275, w: 85, h: 55, color: "#171717"}, {x: 620, y: 215, w: 55, h: 90, color: "#263238"}, {x: 620, y: 350, w: 55, h: 90, color: "#212121"}, {x: 790, y: 250, w: 65, h: 100, color: "#263238"}, {x: 935, y: 210, w: 60, h: 95, color: "#212121"}, {x: 1100, y: 420, w: 65, h: 95, color: "#263238"} ] }, { id: "ocean", name: "Trident Fortress", recommended: "Hard", background: "#0277bd", road: "#90a4ae", line: "#e1f5fe", boss: "Leviathan", bossColor: "#01579b", bossPower: "Tidal Rush", description: "A trident-shaped sea wall produces three overlapping lanes around tiny fortified islands.", path: [ [0, 300], [180, 300], [260, 150], [400, 90], [520, 160], [450, 275], [300, 300], [450, 325], [520, 440], [400, 515], [260, 450], [180, 300], [420, 300], [580, 300], [650, 115], [790, 80], [850, 200], [760, 300], [850, 400], [790, 520], [650, 485], [580, 300], [820, 300], [970, 175], [1070, 220], [1020, 300], [1070, 380], [970, 430], [900, 330], [1050, 300], [1200, 300] ], obstacles: [ {x: 350, y: 300, r: 55, color: "#01579b"}, {x: 685, y: 300, r: 62, color: "#0288d1"}, {x: 950, y: 300, r: 52, color: "#01579b"}, {x: 100, y: 110, r: 70, color: "#01579b"}, {x: 100, y: 500, r: 70, color: "#0288d1"}, {x: 540, y: 75, r: 55, color: "#01579b"}, {x: 540, y: 525, r: 55, color: "#0288d1"}, {x: 1130, y: 100, r: 55, color: "#01579b"}, {x: 1130, y: 500, r: 55, color: "#0288d1"} ] }, { id: "moon", name: "Lunar Infinity", recommended: "Hard", background: "#263238", road: "#9e9e9e", line: "#eceff1", boss: "Lunar Colossus", bossColor: "#455a64", bossPower: "Gravity Lock", description: "An infinity-shaped moon route crosses itself twice, creating powerful but exposed central positions.", path: [ [0, 300], [150, 300], [235, 170], [390, 120], [520, 210], [600, 300], [680, 390], [810, 480], [970, 430], [1040, 300], [970, 170], [810, 120], [680, 210], [600, 300], [520, 390], [390, 480], [235, 430], [170, 320], [300, 300], [470, 300], [600, 300], [750, 300], [900, 300], [1200, 300] ], obstacles: [ {x: 340, y: 300, r: 62, color: "#111111"}, {x: 600, y: 145, r: 62, color: "#171717"}, {x: 600, y: 455, r: 62, color: "#111111"}, {x: 860, y: 300, r: 65, color: "#171717"}, {x: 105, y: 110, r: 60, color: "#111111"}, {x: 105, y: 500, r: 60, color: "#171717"}, {x: 1110, y: 120, r: 62, color: "#111111"}, {x: 1110, y: 485, r: 62, color: "#171717"} ] }, { id: "factory", name: "Abandoned Factory", recommended: "Medium", background: "#455a64", road: "#795548", line: "#ffca28", boss: "War Machine", bossColor: "#b71c1c", bossPower: "Armor Upgrade", description: "A mechanical conveyor route uses long straights, U-turns, and compact machine-room firing pockets.", path: [ [0, 90], [220, 90], [220, 210], [90, 210], [90, 350], [330, 350], [330, 500], [520, 500], [520, 300], [430, 300], [430, 150], [680, 150], [680, 430], [850, 430], [850, 90], [1040, 90], [1040, 230], [940, 230], [940, 360], [1100, 360], [1100, 500], [1200, 500] ], obstacles: [ {x: 120, y: 420, w: 130, h: 80, color: "#263238"}, {x: 270, y: 130, w: 120, h: 90, color: "#37474f"}, {x: 360, y: 370, w: 130, h: 90, color: "#263238"}, {x: 540, y: 180, w: 105, h: 90, color: "#37474f"}, {x: 715, y: 230, w: 110, h: 140, color: "#263238"}, {x: 875, y: 470, w: 100, h: 70, color: "#37474f"}, {x: 1070, y: 130, w: 100, h: 80, color: "#263238"} ] }, { id: "ruins", name: "Ancient Sun Temple", recommended: "Medium", background: "#9e8b61", road: "#bcaaa4", line: "#6d4c41", boss: "Stone Emperor", bossColor: "#5d4037", bossPower: "Stone Legion", description: "A sun-shaped temple route circles a central monument before escaping through broken outer walls.", path: [ [0, 300], [160, 300], [230, 145], [390, 85], [540, 150], [600, 300], [540, 450], [390, 515], [230, 450], [160, 300], [290, 300], [340, 205], [450, 180], [525, 260], [500, 360], [400, 415], [315, 355], [290, 300], [420, 300], [600, 300], [760, 300], [830, 150], [985, 95], [1090, 200], [1040, 300], [1090, 400], [985, 505], [830, 450], [780, 330], [1000, 300], [1200, 300] ], obstacles: [ {x: 410, y: 300, r: 58, color: "#5d4037"}, {x: 100, y: 110, w: 85, h: 100, color: "#6d4c41"}, {x: 100, y: 430, w: 85, h: 100, color: "#795548"}, {x: 630, y: 100, w: 95, h: 115, color: "#6d4c41"}, {x: 630, y: 390, w: 95, h: 115, color: "#795548"}, {x: 900, y: 250, w: 80, h: 100, color: "#6d4c41"}, {x: 1100, y: 85, w: 80, h: 105, color: "#795548"}, {x: 1100, y: 420, w: 80, h: 105, color: "#6d4c41"} ] }, { id: "storm", name: "Thunderbolt Peaks", recommended: "Hard", background: "#546e7a", road: "#78909c", line: "#fff176", boss: "Thunder Beast", bossColor: "#f9a825", bossPower: "Lightning Surge", description: "A lightning-bolt route creates abrupt reversals with mountain peaks blocking the safest placements.", path: [ [0, 100], [250, 100], [160, 250], [420, 250], [290, 440], [550, 440], [470, 300], [690, 300], [610, 130], [840, 130], [750, 330], [980, 330], [900, 500], [1110, 500], [1030, 370], [1200, 370] ], obstacles: [ {x: 105, y: 385, r: 75, color: "#37474f"}, {x: 340, y: 130, r: 70, color: "#455a64"}, {x: 455, y: 520, r: 62, color: "#37474f"}, {x: 585, y: 185, r: 68, color: "#455a64"}, {x: 785, y: 455, r: 73, color: "#37474f"}, {x: 925, y: 150, r: 70, color: "#455a64"}, {x: 1110, y: 130, r: 65, color: "#37474f"} ] }, { id: "abyss", name: "The Abyssal Eye", recommended: "Hard", background: "#080018", road: "#311b92", line: "#e040fb", boss: "Abyss King", bossColor: "#4a148c", bossPower: "Reality Tear", description: "Enemies circle the Abyssal Eye before crossing its center, leaving only a few dangerous tower platforms.", path: [ [0, 300], [150, 300], [210, 145], [370, 65], [570, 85], [720, 210], [740, 375], [620, 510], [420, 535], [240, 455], [160, 325], [225, 200], [375, 125], [545, 155], [650, 260], [645, 365], [535, 450], [390, 425], [300, 350], [300, 260], [390, 185], [520, 205], [580, 280], [560, 350], [480, 395], [390, 355], [375, 290], [435, 250], [500, 285], [500, 330], [450, 345], [430, 305], [500, 300], [770, 300], [850, 140], [1020, 140], [1090, 300], [1020, 460], [850, 460], [800, 340], [1000, 300], [1200, 300] ], obstacles: [ {x: 450, y: 300, r: 72, color: "#000000"}, {x: 95, y: 95, r: 65, color: "#120020"}, {x: 95, y: 505, r: 65, color: "#000000"}, {x: 760, y: 90, r: 65, color: "#120020"}, {x: 760, y: 510, r: 65, color: "#000000"}, {x: 925, y: 300, r: 70, color: "#120020"}, {x: 1120, y: 100, r: 58, color: "#000000"}, {x: 1120, y: 500, r: 58, color: "#120020"} ] } ]; const missions={ noFarm:{name:"No Farming Allowed",description:"Beat wave 10 without placing a Farm.",reward:40}, perfectBoss:{name:"Untouchable",description:"Defeat a boss without losing base health during its wave.",reward:50}, wave50:{name:"Endless Defender",description:"Reach wave 50 in one run.",reward:100}, humanOnly:{name:"Human Resistance",description:"Beat wave 10 using only Human towers.",reward:60}, thousandKills:{name:"Zombie Hunter",description:"Defeat 1,000 zombies across all runs.",reward:100}, hardVictory:{name:"Hard Mode Hero",description:"Beat wave 10 using Hard difficulty.",reward:75} }; let account={ zombieBucks:0, freeTowerType:null, totalRound10Wins:0, unlockedMapCount:1, cashBoosts:0, permanentDamageLevel:0, permanentCashLevel:0, completedMaps:{}, ownedHumans:["survivor"], equippedHuman:"survivor", totalKills:0, completedMissions:{} }; let currentMap=null; let currentDifficulty="medium"; let money=260; let health=MAX_HEALTH; let wave=1; let towers=[]; let enemies=[]; let effects=[]; let selectedTower=null; let placementType=null; let pointer={x:0,y:0}; let waveRunning=false; let gameActive=false; let paused=false; let autoStart=false; let speedMultiplier=1; let gameTime=0; let lastTimestamp=0; let bossStartHealth=MAX_HEALTH; let overdriveUntil=0; let abilityReady={}; let runUsedFarm=false; let runOnlyHumans=true; let runPlacedTower=false; let warningTimer=null; let nextUiUpdate=0; function difficultyData(){ return difficulties[currentDifficulty]||difficulties.medium; } function setMessage(text){ message.textContent=text; } function cleanAccount(data={}){ const owned=Array.isArray(data.ownedHumans) ?data.ownedHumans.filter(id=>humanTypes[id]) :["survivor"]; if(!owned.includes("survivor"))owned.unshift("survivor"); return{ zombieBucks:Math.max(0,Number(data.zombieBucks)||0), freeTowerType:data.freeTowerType&&towerTypes[data.freeTowerType]&&data.freeTowerType!=="waste"?data.freeTowerType:null, totalRound10Wins:Math.max(0,Number(data.totalRound10Wins)||0), unlockedMapCount:Math.max(1,Math.min(maps.length,Number(data.unlockedMapCount)||1)), cashBoosts:Math.max(0,Number(data.cashBoosts)||0), permanentDamageLevel:Math.max(0,Math.min(10,Number(data.permanentDamageLevel)||0)), permanentCashLevel:Math.max(0,Math.min(10,Number(data.permanentCashLevel)||0)), completedMaps:data.completedMaps&&typeof data.completedMaps==="object"?data.completedMaps:{}, ownedHumans:owned, equippedHuman:owned.includes(data.equippedHuman)?data.equippedHuman:"survivor", totalKills:Math.max(0,Number(data.totalKills)||0), completedMissions:data.completedMissions&&typeof data.completedMissions==="object"?data.completedMissions:{} }; } function loadAccount(){ let saved=localStorage.getItem(SAVE_KEY); if(!saved){ for(const key of OLD_SAVE_KEYS){ saved=localStorage.getItem(key); if(saved)break; } } if(saved){ try{ account=cleanAccount(JSON.parse(saved)); }catch(error){ account=cleanAccount(); } } saveAccount(false); } function saveAccount(show=true){ localStorage.setItem(SAVE_KEY,JSON.stringify(account)); renderLobby(); if(show)setMessage("Account saved!"); } function downloadSave(){ saveAccount(false); const data={ game:"Zombie Defense", version:"V5 Boss Invasion Expanded", ...account }; const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download="zombie-defense-v5-expanded-save.json"; link.click(); URL.revokeObjectURL(url); setMessage("Save file downloaded."); } function uploadSave(event){ const file=event.target.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=()=>{ try{ account=cleanAccount(JSON.parse(reader.result)); saveAccount(false); renderHumans(); renderMissions(); setMessage("Save file loaded."); }catch(error){ setMessage("That save file did not work."); } event.target.value=""; }; reader.readAsText(file); } function permanentDamageMultiplier(){ return 1+account.permanentDamageLevel*.05; } function permanentStartingCash(){ return account.permanentCashLevel*50; } function permanentDamageCost(){ return 75+account.permanentDamageLevel*50; } function permanentCashCost(){ return 60+account.permanentCashLevel*40; } function recommendedDifficulty(map){ if(map.recommended==="Easy")return"easy"; if(map.recommended==="Hard")return"hard"; return"medium"; } function renderLobby(){ document.getElementById("lobbyBucks").textContent=account.zombieBucks; document.getElementById("unlockedText").textContent=account.unlockedMapCount; document.getElementById("totalMapsText").textContent=maps.length; document.getElementById("freeTowerText").textContent=account.freeTowerType?towerTypes[account.freeTowerType].name:"None"; document.getElementById("cashBoostText").textContent=account.cashBoosts; document.getElementById("permDamageText").textContent=account.permanentDamageLevel*5; document.getElementById("permCashText").textContent=permanentStartingCash(); document.getElementById("killsText").textContent=account.totalKills; const human=humanTypes[account.equippedHuman]||humanTypes.survivor; document.getElementById("humanText").textContent=human.icon+" "+human.name; const rollButton=document.getElementById("rollTowerButton"); const boostButton=document.getElementById("cashBoostButton"); const damageMetaButton=document.getElementById("permDamageButton"); const cashMetaButton=document.getElementById("permCashButton"); rollButton.disabled=account.zombieBucks<100||Boolean(account.freeTowerType); boostButton.disabled=account.zombieBucks<50; if(account.permanentDamageLevel>=10){ damageMetaButton.textContent="Permanent Damage: MAXED"; damageMetaButton.disabled=true; }else{ const cost=permanentDamageCost(); damageMetaButton.textContent="Permanent +5% Damage — "+cost+" Zombie-Bucks"; damageMetaButton.disabled=account.zombieBucks<cost; } if(account.permanentCashLevel>=10){ cashMetaButton.textContent="Permanent Cash: MAXED"; cashMetaButton.disabled=true; }else{ const cost=permanentCashCost(); cashMetaButton.textContent="Permanent +$50 Cash — "+cost+" Zombie-Bucks"; cashMetaButton.disabled=account.zombieBucks<cost; } mapGrid.innerHTML=maps.map((map,index)=>{ const unlocked=index<account.unlockedMapCount; const completed=Boolean(account.completedMaps[map.id]); const defaultDifficulty=recommendedDifficulty(map); return` <div class="mapCard ${unlocked?"":"locked"} ${completed?"completed":""}"> <h2>${map.name}</h2> <p>${map.description}</p> <p><strong>Boss:</strong> ${map.boss}</p> <span class="difficulty">Recommended: ${map.recommended}</span> <div class="difficultyDetails"> <div class="easyText"><strong>Easy:</strong> 5 Zombie-Bucks</div> <div class="mediumText"><strong>Medium:</strong> 10 Zombie-Bucks</div> <div class="hardText"><strong>Hard:</strong> 20 Zombie-Bucks</div> </div> <select data-difficulty="${index}" ${unlocked?"":"disabled"}> <option value="easy" ${defaultDifficulty==="easy"?"selected":""}>Easy — 5 Zombie-Bucks</option> <option value="medium" ${defaultDifficulty==="medium"?"selected":""}>Medium — 10 Zombie-Bucks</option> <option value="hard" ${defaultDifficulty==="hard"?"selected":""}>Hard — 20 Zombie-Bucks</option> </select> <p>${completed?"✅ Completed":unlocked?"Unlocked":"Locked"}</p> <button class="green" data-map="${index}" ${unlocked?"":"disabled"}> ${unlocked?"Play "+map.name:"Locked"} </button> </div> `; }).join(""); mapGrid.querySelectorAll("button[data-map]").forEach(button=>{ button.addEventListener("click",()=>{ const index=Number(button.dataset.map); const selector=mapGrid.querySelector(`select[data-difficulty="${index}"]`); startMap(index,selector?selector.value:"medium"); }); }); } function renderHumans(){ humanGrid.innerHTML=Object.entries(humanTypes).map(([id,human])=>{ const owned=account.ownedHumans.includes(id); const equipped=account.equippedHuman===id; return` <div class="humanCard ${equipped?"equipped":""}"> <div class="humanIcon">${human.icon}</div> <h2>${human.name}</h2> <p>${human.description}</p> <button data-human="${id}" ${!owned&&account.zombieBucks<human.cost?"disabled":""}> ${equipped?"Equipped":owned?"Equip":"Buy — "+human.cost+" Zombie-Bucks"} </button> </div> `; }).join(""); humanGrid.querySelectorAll("button[data-human]").forEach(button=>{ button.addEventListener("click",()=>{ const id=button.dataset.human; const human=humanTypes[id]; if(account.ownedHumans.includes(id)){ account.equippedHuman=id; saveAccount(false); renderHumans(); setMessage(human.name+" equipped."); return; } if(account.zombieBucks<human.cost)return; account.zombieBucks-=human.cost; account.ownedHumans.push(id); account.equippedHuman=id; saveAccount(false); renderHumans(); setMessage(human.name+" purchased and equipped."); }); }); } function renderMissions(){ missionGrid.innerHTML=Object.entries(missions).map(([id,mission])=>{ const completed=Boolean(account.completedMissions[id]); return` <div class="missionCard ${completed?"completed":""}"> <h3>${completed?"✅ ":""}${mission.name}</h3> <p>${mission.description}</p> <p class="rewardText">Reward: ${mission.reward} Zombie-Bucks</p> <p>${completed?"Completed":"Not completed"}</p> </div> `; }).join(""); } function completeMission(id){ if(!missions[id]||account.completedMissions[id])return; account.completedMissions[id]=true; account.zombieBucks+=missions[id].reward; saveAccount(false); renderMissions(); showWarning( "MISSION COMPLETE: "+ missions[id].name+ " +"+ missions[id].reward+ " Zombie-Bucks" ); } function rollFreeTower(){ if(account.zombieBucks<100||account.freeTowerType)return; const choices=Object.keys(towerTypes).filter(id=>id!=="waste"); account.zombieBucks-=100; account.freeTowerType=choices[Math.floor(Math.random()*choices.length)]; saveAccount(false); setMessage("You rolled a free "+towerTypes[account.freeTowerType].name+"!"); } function buyCashBoost(){ if(account.zombieBucks<50)return; account.zombieBucks-=50; account.cashBoosts++; saveAccount(false); setMessage("Your next run will receive an extra $150."); } function buyPermanentDamage(){ const cost=permanentDamageCost(); if(account.permanentDamageLevel>=10||account.zombieBucks<cost)return; account.zombieBucks-=cost; account.permanentDamageLevel++; saveAccount(false); setMessage("Permanent damage increased to +"+account.permanentDamageLevel*5+"%."); } function buyPermanentCash(){ const cost=permanentCashCost(); if(account.permanentCashLevel>=10||account.zombieBucks<cost)return; account.zombieBucks-=cost; account.permanentCashLevel++; saveAccount(false); setMessage("Permanent starting cash increased to +$"+permanentStartingCash()+"."); } function buildGameButtons(){ towerBar.innerHTML=Object.entries(towerTypes).map(([id,tower])=>` <button data-tower="${id}"> ${tower.icon} ${tower.name} ($${tower.cost}) </button> `).join(""); towerBar.querySelectorAll("button[data-tower]").forEach(button=>{ button.addEventListener("click",()=>{ beginPlacement(button.dataset.tower); }); }); controlBar.innerHTML=` <button id="startWaveButton" class="green">Start Wave</button> <button id="autoButton" class="blue">Auto Start: OFF</button> <button id="gameSpeedButton" class="blue">Speed: 1x</button> <button id="rewardButton" class="red">Supply Drop (+$25)</button> <button id="lobbyButton" class="purple">Back to Lobby</button> `; document.getElementById("startWaveButton").addEventListener("click",startWave); document.getElementById("autoButton").addEventListener("click",()=>{ autoStart=!autoStart; document.getElementById("autoButton").textContent="Auto Start: "+(autoStart?"ON":"OFF"); setMessage("Auto Start "+(autoStart?"enabled.":"disabled.")); if(autoStart&&!waveRunning)scheduleAutoStart(); }); document.getElementById("gameSpeedButton").addEventListener("click",()=>{ speedMultiplier=speedMultiplier===1?2:1; document.getElementById("gameSpeedButton").textContent="Speed: "+speedMultiplier+"x"; setMessage("Game speed set to "+speedMultiplier+"x."); }); document.getElementById("rewardButton").addEventListener("click",()=>{ const button=document.getElementById("rewardButton"); if(button.disabled)return; money+=25; button.disabled=true; button.textContent="Supply Drop Cooldown"; setMessage("Supply Drop delivered $25."); setTimeout(()=>{ if(gameActive){ button.disabled=false; button.textContent="Supply Drop (+$25)"; } },120000); }); document.getElementById("lobbyButton").addEventListener("click",()=>{ returnToLobby("Returned to the lobby. Run progress was reset."); }); abilityBar.innerHTML=Object.entries(abilities).map(([id,ability])=>` <button data-ability="${id}"> ${ability.icon} ${ability.name} </button> `).join(""); abilityBar.querySelectorAll("button[data-ability]").forEach(button=>{ button.addEventListener("click",()=>{ activateAbility(button.dataset.ability); }); }); } function startMap(index,difficulty="medium"){ if(index<0||index>=account.unlockedMapCount)return; currentMap=maps[index]; currentDifficulty=difficulties[difficulty]?difficulty:"medium"; const settings=difficultyData(); money=Math.floor((260+permanentStartingCash())*settings.startingCash); if(account.cashBoosts>0){ account.cashBoosts--; money+=150; saveAccount(false); } health=MAX_HEALTH; wave=1; towers=[]; enemies=[]; effects=[]; selectedTower=null; placementType=null; waveRunning=false; gameActive=true; paused=false; autoStart=false; speedMultiplier=1; gameTime=0; lastTimestamp=performance.now(); bossStartHealth=MAX_HEALTH; overdriveUntil=0; abilityReady={}; runUsedFarm=false; runOnlyHumans=true; runPlacedTower=false; lobby.classList.remove("visible"); humanShop.classList.remove("visible"); missionsPage.classList.remove("visible"); resultOverlay.classList.remove("visible"); towerBar.classList.remove("hidden"); controlBar.classList.remove("hidden"); abilityBar.classList.remove("hidden"); towerPanel.style.display="none"; bossPanel.style.display="none"; document.getElementById("autoButton").textContent="Auto Start: OFF"; document.getElementById("gameSpeedButton").textContent="Speed: 1x"; setMessage( currentMap.name+ " selected on "+ settings.name+ ". Wave 10 rewards "+ settings.bucks+ " Zombie-Bucks." ); updateUI(); } function returnToLobby(text="Choose a map and difficulty."){ gameActive=false; paused=false; waveRunning=false; currentMap=null; towers=[]; enemies=[]; effects=[]; selectedTower=null; placementType=null; towerPanel.style.display="none"; bossPanel.style.display="none"; resultOverlay.classList.remove("visible"); towerBar.classList.add("hidden"); controlBar.classList.add("hidden"); abilityBar.classList.add("hidden"); lobby.classList.add("visible"); saveAccount(false); setMessage(text); updateUI(); } function beginPlacement(type){ const tower=towerTypes[type]; if(!tower||!gameActive||paused)return; const free=account.freeTowerType===type; if(!free&&money<tower.cost){ setMessage("Not enough money."); return; } placementType=type; selectedTower=null; towerPanel.style.display="none"; setMessage("Click a valid area to place "+tower.name+". Press Escape to cancel."); } function pointSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1; const dy=y2-y1; const lengthSquared=dx*dx+dy*dy; if(lengthSquared===0)return Math.hypot(px-x1,py-y1); const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/lengthSquared)); const x=x1+t*dx; const y=y1+t*dy; return Math.hypot(px-x,py-y); } function validPlacement(x,y){ if(!currentMap)return false; if(x<25||y<25||x>WIDTH-25||y>HEIGHT-25)return false; for(let i=0;i<currentMap.path.length-1;i++){ const first=currentMap.path[i]; const second=currentMap.path[i+1]; if(pointSegmentDistance(x,y,first[0],first[1],second[0],second[1])<62){ return false; } } for(const object of currentMap.obstacles){ if(object.r){ if(Math.hypot(x-object.x,y-object.y)<object.r+27)return false; }else if( x>object.x-object.w/2-27&& x<object.x+object.w/2+27&& y>object.y-object.h/2-27&& y<object.y+object.h/2+27 ){ return false; } } return !towers.some(tower=>Math.hypot(x-tower.x,y-tower.y)<50); } function placeTower(type,x,y){ const base=towerTypes[type]; const free=account.freeTowerType===type; if(!free&&money<base.cost)return; let stats={...base}; let humanType=null; if(type==="human"){ humanType=account.equippedHuman; stats={ ...base, ...humanTypes[humanType], cost:base.cost, color:base.color }; } if(free){ account.freeTowerType=null; saveAccount(false); }else{ money-=base.cost; } const tower={ type, humanType, name:type==="human"?humanTypes[humanType].name+" Human":base.name, icon:type==="human"?humanTypes[humanType].icon:base.icon, color:base.color, x, y, cost:base.cost, spent:base.cost, damage:(stats.damage||0)*permanentDamageMultiplier(), range:stats.range||0, rate:stats.rate||0, splash:stats.splash||0, slow:stats.slow||1, poison:stats.poison||0, burn:stats.burn||0, chain:stats.chain||0, pierce:stats.pierce||1, income:stats.income||0, heal:stats.heal||0, auraDamage:stats.auraDamage||0, auraSpeed:stats.auraSpeed||0, auraRange:stats.auraRange||0, detectInvisible:Boolean(stats.detectInvisible), nonAttacking:Boolean(stats.nonAttacking), targeting:"first", upgrades:{damage:0,range:0,speed:0}, evolution:null, ability:null, lastShot:-999, stunnedUntil:0, bossBonus:1, eliteBonus:1, invisibleBonus:1, frozenBonus:1, critChance:0, critDamage:2, ignoreArmor:false, curse:stats.curse||0, bossBuck:0 }; towers.push(tower); placementType=null; runPlacedTower=true; if(type==="farm")runUsedFarm=true; if(type!=="human")runOnlyHumans=false; setMessage(tower.name+" placed."); updateUI(); } function getPathPosition(progress){ const points=currentMap.path; const segments=[]; let total=0; for(let i=0;i<points.length-1;i++){ const length=Math.hypot( points[i+1][0]-points[i][0], points[i+1][1]-points[i][1] ); segments.push(length); total+=length; } let distance=Math.max(0,Math.min(1,progress))*total; for(let i=0;i<segments.length;i++){ if(distance<=segments[i]){ const ratio=distance/segments[i]; return{ x:points[i][0]+(points[i+1][0]-points[i][0])*ratio, y:points[i][1]+(points[i+1][1]-points[i][1])*ratio }; } distance-=segments[i]; } const last=points[points.length-1]; return{x:last[0],y:last[1]}; } function chooseEnemyType(index){ if(wave<5)return"normal"; if(wave>=6&&index%7===0){ const elite=["armored","regenerator","shielded","invisible","healer","splitter"]; return elite[Math.floor(Math.random()*elite.length)]; } if(wave>=8&&index%5===0)return"tank"; if(index%4===0)return"fast"; return"normal"; } function createEnemy(type,progress,boss=false){ const settings=difficultyData(); const baseHealth=35+wave*14+Math.pow(wave,1.18)*3; let healthMultiplier=1; let speed=.042+Math.min(.075,wave*.0022); let radius=17; let color="#43a047"; let reward=10; let leakDamage=5+Math.floor(wave/2); if(type==="fast"){ speed*=1.55; healthMultiplier=.8; color="#00c853"; } if(type==="tank"){ speed*=.68; healthMultiplier=2.2; radius=22; color="#33691e"; reward=18; leakDamage+=6; } if(type==="armored"){ healthMultiplier=1.7; color="#78909c"; reward=16; } if(type==="regenerator"){ healthMultiplier=1.45; color="#8bc34a"; reward=16; } if(type==="shielded"){ healthMultiplier=1.5; color="#42a5f5"; reward=17; } if(type==="invisible"){ healthMultiplier=1.15; color="#bdbdbd"; reward=18; } if(type==="healer"){ healthMultiplier=1.35; color="#ec407a"; reward=20; } if(type==="splitter"){ healthMultiplier=1.3; color="#ff9800"; reward=15; } if(boss){ healthMultiplier=18+wave*.7; speed*=.5; radius=36; color=currentMap.bossColor; reward=150+wave*5; leakDamage=250; } healthMultiplier*=settings.health; speed*=settings.speed; reward=Math.max(1,Math.round(reward*settings.cashReward)); leakDamage=Math.max(1,Math.round(leakDamage*settings.leak)); const maxHealth=Math.round(baseHealth*healthMultiplier); return{ type, boss, progress, baseSpeed:speed, radius, color, health:maxHealth, maxHealth, reward, leakDamage, shield:type==="shielded"?4:0, slowUntil:0, slowAmount:1, freezeUntil:0, poisonUntil:0, burnUntil:0, poisonDamage:0, burnDamage:0, poisonTimer:0, burnTimer:0, healTimer:0, bossTimer:0, cursed:1, child:false, dead:false }; } function startWave(){ if(!gameActive||paused||waveRunning)return; placementType=null; selectedTower=null; towerPanel.style.display="none"; enemies=[]; const settings=difficultyData(); const count=Math.max(1,Math.round((5+Math.floor(wave*1.8))*settings.count)); for(let i=0;i<count;i++){ enemies.push(createEnemy(chooseEnemyType(i),-.08*i,false)); } if(wave%10===0){ const boss=createEnemy("boss",-.08*count-.12,true); enemies.push(boss); bossStartHealth=health; showWarning( "BOSS WAVE: "+ currentMap.boss+ " — "+ currentMap.bossPower ); } waveRunning=true; setMessage( settings.name+ " wave "+ wave+ " started with "+ count+ (wave%10===0?" zombies and a boss.":" zombies.") ); updateUI(); } function scheduleAutoStart(){ if(!autoStart||waveRunning||paused||!gameActive)return; setMessage("Auto Start: next wave begins now."); setTimeout(()=>{ if(autoStart&&!waveRunning&&!paused&&gameActive)startWave(); },1000); } function enemyIsElite(enemy){ return["armored","regenerator","shielded","invisible","healer","splitter"].includes(enemy.type); } function canTarget(tower,enemy){ if(enemy.dead||enemy.progress<0)return false; if(enemy.type==="invisible"&&!tower.detectInvisible)return false; const position=getPathPosition(enemy.progress); return Math.hypot(position.x-tower.x,position.y-tower.y)<=tower.range; } function getTarget(tower){ const targets=enemies.filter(enemy=>canTarget(tower,enemy)); if(!targets.length)return null; if(tower.targeting==="last"){ return targets.reduce((best,enemy)=>enemy.progress<best.progress?enemy:best); } if(tower.targeting==="strong"){ return targets.reduce((best,enemy)=>enemy.health>best.health?enemy:best); } if(tower.targeting==="weak"){ return targets.reduce((best,enemy)=>enemy.health<best.health?enemy:best); } return targets.reduce((best,enemy)=>enemy.progress>best.progress?enemy:best); } function towerDamageMultiplier(tower){ let multiplier=1; for(const other of towers){ if( other!==tower&& other.auraDamage>0&& Math.hypot(other.x-tower.x,other.y-tower.y)<=other.auraRange ){ multiplier*=1+other.auraDamage; } } return multiplier; } function towerSpeedMultiplier(tower){ let multiplier=gameTime<overdriveUntil?2:1; for(const other of towers){ if( other!==tower&& other.auraSpeed>0&& Math.hypot(other.x-tower.x,other.y-tower.y)<=other.auraRange ){ multiplier*=1+other.auraSpeed; } } return multiplier; } function damageEnemy(enemy,amount,source={}){ if(enemy.dead)return; if(enemy.shield>0){ enemy.shield--; return; } let damage=amount*enemy.cursed; if(enemy.type==="armored"&&!source.ignoreArmor){ damage*=.62; } enemy.health-=damage; if(enemy.health<=0)killEnemy(enemy); } function killEnemy(enemy){ if(enemy.dead)return; enemy.dead=true; money+=enemy.reward; account.totalKills++; if(account.totalKills>=1000)completeMission("thousandKills"); if(enemy.type==="splitter"&&!enemy.child){ for(let i=0;i<2;i++){ const child=createEnemy("fast",Math.max(0,enemy.progress-.015*i),false); child.health=Math.max(10,enemy.maxHealth*.32); child.maxHealth=child.health; child.radius=12; child.reward=5; child.child=true; enemies.push(child); } } if(enemy.boss){ bossPanel.style.display="none"; towers.forEach(tower=>{ account.zombieBucks+=tower.bossBuck||0; }); if(health>=bossStartHealth)completeMission("perfectBoss"); saveAccount(false); showWarning(currentMap.boss+" defeated!"); } } function attackEnemy(tower,target){ let damage=tower.damage*towerDamageMultiplier(tower); if(target.boss)damage*=tower.bossBonus; if(enemyIsElite(target))damage*=tower.eliteBonus; if(target.type==="invisible")damage*=tower.invisibleBonus; if( tower.frozenBonus>1&& (target.slowUntil>gameTime||target.freezeUntil>gameTime) ){ damage*=tower.frozenBonus; } if(tower.critChance>0&&Math.random()<tower.critChance){ damage*=tower.critDamage; } const targetPosition=getPathPosition(target.progress); effects.push({ x1:tower.x, y1:tower.y, x2:targetPosition.x, y2:targetPosition.y, color:tower.color, expires:gameTime+.1 }); damageEnemy(target,damage,tower); if(tower.splash>0){ enemies.forEach(other=>{ if(other===target||other.dead||other.progress<0)return; const position=getPathPosition(other.progress); if(Math.hypot(position.x-targetPosition.x,position.y-targetPosition.y)<=tower.splash){ damageEnemy(other,damage*.5,tower); } }); } if(tower.chain>0){ let current=target; const hit=new Set([target]); for(let jump=0;jump<tower.chain;jump++){ const currentPosition=getPathPosition(current.progress); const next=enemies .filter(enemy=>!enemy.dead&&!hit.has(enemy)&&enemy.progress>=0) .map(enemy=>{ const position=getPathPosition(enemy.progress); return{ enemy, position, distance:Math.hypot( position.x-currentPosition.x, position.y-currentPosition.y ) }; }) .filter(item=>item.distance<=145) .sort((a,b)=>a.distance-b.distance)[0]; if(!next)break; effects.push({ x1:currentPosition.x, y1:currentPosition.y, x2:next.position.x, y2:next.position.y, color:"#ffff00", expires:gameTime+.1 }); hit.add(next.enemy); damageEnemy(next.enemy,damage*.62,tower); current=next.enemy; } } if(tower.pierce>1){ enemies .filter(enemy=> !enemy.dead&& enemy!==target&& enemy.progress>=0&& enemy.progress<target.progress&& target.progress-enemy.progress<.17 ) .sort((a,b)=>b.progress-a.progress) .slice(0,tower.pierce-1) .forEach((enemy,index)=>{ damageEnemy( enemy, damage*Math.max(.35,.75-index*.06), tower ); }); } if(tower.slow<1){ target.slowUntil=gameTime+2.5; target.slowAmount=tower.slow; } if(tower.poison>0){ target.poisonUntil=gameTime+4; target.poisonDamage=Math.max(target.poisonDamage,tower.poison); } if(tower.burn>0){ target.burnUntil=gameTime+3; target.burnDamage=Math.max(target.burnDamage,tower.burn); } if(tower.curse>0){ target.cursed=Math.max(target.cursed,1+tower.curse); } } function updateTowers(){ towers.forEach(tower=>{ if(tower.nonAttacking||tower.rate<=0||tower.stunnedUntil>gameTime)return; const rate=tower.rate*towerSpeedMultiplier(tower); if(gameTime-tower.lastShot<1/rate)return; const target=getTarget(tower); if(target){ tower.lastShot=gameTime; attackEnemy(tower,target); } }); } function useBossPower(boss){ if(gameTime-boss.bossTimer<6)return; boss.bossTimer=gameTime; if(["grass","ice","swamp","moon"].includes(currentMap.id)){ const duration=currentMap.id==="moon"?3:currentMap.id==="ice"?2.2:1.8; towers.forEach(tower=>{ tower.stunnedUntil=gameTime+duration; }); showWarning(currentMap.boss.toUpperCase()+" USED "+currentMap.bossPower.toUpperCase()+"!"); return; } if(["desert","space","ocean"].includes(currentMap.id)){ boss.progress=Math.min(.96,boss.progress+(currentMap.id==="ocean"?.09:.07)); showWarning(currentMap.boss.toUpperCase()+" RUSHED FORWARD!"); return; } if(["volcano","graveyard","ruins","abyss","candy"].includes(currentMap.id)){ const types={ volcano:["tank","fast","fast"], graveyard:["invisible","regenerator","fast"], ruins:["armored","armored","tank"], abyss:["splitter","invisible","fast"], candy:["splitter","splitter"] }[currentMap.id]; types.forEach((type,index)=>{ enemies.push( createEnemy( type, Math.max(0,boss.progress-.03-index*.02), false ) ); }); showWarning(currentMap.boss.toUpperCase()+" SUMMONED MINIONS!"); return; } if(["city","factory","jungle","storm"].includes(currentMap.id)){ enemies.forEach(enemy=>{ if(enemy.dead||enemy.boss)return; if(currentMap.id==="jungle"){ enemy.health=Math.min(enemy.maxHealth,enemy.health+enemy.maxHealth*.2); }else if(currentMap.id==="factory"){ enemy.shield+=2; }else if(currentMap.id==="storm"){ enemy.baseSpeed*=1.08; }else{ enemy.health=Math.min(enemy.maxHealth,enemy.health+enemy.maxHealth*.15); enemy.baseSpeed*=1.05; } }); showWarning(currentMap.boss.toUpperCase()+" BOOSTED THE HORDE!"); } } function updateEnemies(delta){ for(const enemy of enemies){ if(enemy.dead)continue; if(enemy.progress<0){ enemy.progress+=enemy.baseSpeed*delta; continue; } if(enemy.poisonUntil>gameTime){ enemy.poisonTimer+=delta; if(enemy.poisonTimer>=.5){ enemy.poisonTimer=0; damageEnemy(enemy,enemy.poisonDamage,{ignoreArmor:true}); } } if(enemy.burnUntil>gameTime){ enemy.burnTimer+=delta; if(enemy.burnTimer>=.45){ enemy.burnTimer=0; damageEnemy(enemy,enemy.burnDamage,{}); } } if(enemy.type==="regenerator"){ enemy.health=Math.min( enemy.maxHealth, enemy.health+enemy.maxHealth*.012*delta ); } if(enemy.type==="healer"){ enemy.healTimer+=delta; if(enemy.healTimer>=1){ enemy.healTimer=0; const healerPosition=getPathPosition(enemy.progress); enemies.forEach(other=>{ if(other.dead||other.progress<0)return; const position=getPathPosition(other.progress); if(Math.hypot(position.x-healerPosition.x,position.y-healerPosition.y)<=130){ other.health=Math.min(other.maxHealth,other.health+other.maxHealth*.07); } }); } } if(enemy.boss){ useBossPower(enemy); bossPanel.style.display="block"; bossName.textContent=currentMap.boss+" — "+currentMap.bossPower; bossHealthFill.style.width=Math.max(0,enemy.health/enemy.maxHealth*100)+"%"; } let speed=enemy.baseSpeed; if(enemy.freezeUntil>gameTime){ speed=0; }else if(enemy.slowUntil>gameTime){ speed*=enemy.slowAmount; } enemy.progress+=speed*delta; if(enemy.progress>=1){ enemy.dead=true; health-=enemy.leakDamage; if(enemy.boss)bossPanel.style.display="none"; if(health<=0){ health=0; endGame(); return; } } } enemies=enemies.filter(enemy=>!enemy.dead); } function finishWave(){ waveRunning=false; effects=[]; let income=0; let healing=0; towers.forEach(tower=>{ income+=tower.income||0; healing+=tower.heal||0; }); money+=income; health=Math.min(MAX_HEALTH,health+healing); const clearedWave=wave; if(clearedWave===10){ completeMap(); return; } wave++; if(wave>=50)completeMission("wave50"); let text="Wave cleared!"; if(income>0)text+=" Towers produced $"+Math.round(income)+"."; if(healing>0)text+=" Humans restored "+healing+" health."; setMessage(text); updateUI(); if(autoStart)scheduleAutoStart(); } function completeMap(){ const settings=difficultyData(); account.zombieBucks+=settings.bucks; account.totalRound10Wins++; account.completedMaps[currentMap.id]=true; const index=maps.findIndex(map=>map.id===currentMap.id); let unlockText=""; if(index===account.unlockedMapCount-1&&account.unlockedMapCount<maps.length){ account.unlockedMapCount++; unlockText=" You unlocked "+maps[account.unlockedMapCount-1].name+"!"; } if(!runUsedFarm)completeMission("noFarm"); if(runOnlyHumans&&runPlacedTower)completeMission("humanOnly"); if(currentDifficulty==="hard")completeMission("hardVictory"); saveAccount(false); paused=true; resultTitle.textContent="Map Complete!"; resultText.textContent= "You beat wave 10 on "+ settings.name+ ", defeated "+ currentMap.boss+ ", and earned "+ settings.bucks+ " Zombie-Bucks."+ unlockText; continueButton.style.display="inline-flex"; resultOverlay.classList.add("visible"); updateUI(); } function endGame(){ gameActive=false; waveRunning=false; paused=true; bossPanel.style.display="none"; resultTitle.textContent="Game Over"; resultText.textContent= "You reached wave "+ wave+ " on "+ currentMap.name+ " using "+ difficultyData().name+ " difficulty."; continueButton.style.display="none"; resultOverlay.classList.add("visible"); setMessage("Game over."); updateUI(); } function totalUpgradeCount(tower){ return tower.upgrades.damage+tower.upgrades.range+tower.upgrades.speed; } function damageUpgradeCost(tower){ return 100+tower.upgrades.damage*65; } function rangeUpgradeCost(tower){ return 120+tower.upgrades.range*70; } function speedUpgradeCost(tower){ return 150+tower.upgrades.speed*80; } function isIncomeTower(tower){ return tower.type==="farm"||tower.type==="recycler"; } function showTowerPanel(tower){ if(!tower||!towers.includes(tower)){ hideTowerPanel(); return; } selectedTower=tower; towerPanel.style.display="block"; selectedTowerName.textContent= tower.icon+ " "+ tower.name+ (tower.evolution?" — "+tower.evolution.name:""); towerInfo.innerHTML=` Damage: ${Math.round(tower.damage)}<br> Range: ${Math.round(tower.range)}<br> Attack Speed: ${tower.rate.toFixed(2)} per second<br> Income: $${Math.round(tower.income||0)} per wave<br> Targeting: ${targetingNames[tower.targeting]}<br> Damage Level: ${tower.upgrades.damage}/5<br> Range Level: ${tower.upgrades.range}/5<br> Speed Level: ${tower.upgrades.speed}/5<br> Evolution: ${tower.evolution?tower.evolution.name:"None"} `; targetButton.style.display=tower.nonAttacking?"none":"block"; targetButton.textContent="Targeting: "+targetingNames[tower.targeting]; if(isIncomeTower(tower)){ damageButton.textContent= tower.upgrades.damage>=5 ?"Income: MAXED" :"Upgrade Income — $"+damageUpgradeCost(tower); }else{ damageButton.textContent= tower.upgrades.damage>=5 ?"Damage: MAXED" :"Upgrade Damage — $"+damageUpgradeCost(tower); } rangeButton.textContent= tower.upgrades.range>=5 ?"Range: MAXED" :"Upgrade Range — $"+rangeUpgradeCost(tower); speedButton.textContent= tower.upgrades.speed>=5 ?"Speed: MAXED" :"Upgrade Speed — $"+speedUpgradeCost(tower); damageButton.disabled= tower.upgrades.damage>=5|| money<damageUpgradeCost(tower)|| tower.type==="waste"; rangeButton.disabled= tower.nonAttacking|| tower.upgrades.range>=5|| money<rangeUpgradeCost(tower); speedButton.disabled= tower.nonAttacking|| tower.upgrades.speed>=5|| money<speedUpgradeCost(tower); sellButton.textContent="Sell Tower — $"+Math.floor(tower.spent*.65); if(tower.evolution){ evolutionArea.innerHTML=` <div class="evolutionCard"> <strong>${tower.evolution.name}</strong> <p>${tower.evolution.description}</p> </div> `; }else if(totalUpgradeCount(tower)>=5){ evolutionArea.innerHTML=` <h3>Choose Evolution</h3> ${(evolutions[tower.type]||[]).map((evolution,index)=>` <div class="evolutionCard"> <strong>${evolution.name}</strong> <p>${evolution.description}</p> <button class="purple" data-evolution="${index}" ${money<EVOLUTION_COST?"disabled":""}> Evolve into ${evolution.name} — ${EVOLUTION_COST} </button> </div> `).join("")} `; evolutionArea.querySelectorAll("button[data-evolution]").forEach(button=>{ button.addEventListener("click",()=>{ evolveTower(tower,Number(button.dataset.evolution)); }); }); }else{ evolutionArea.innerHTML=` <h3>Tower Evolution</h3> <div class="panelInfo"> Purchase five total upgrades to unlock evolution.<br> Progress: ${totalUpgradeCount(tower)} / 5 </div> `; } } function hideTowerPanel(){ selectedTower=null; towerPanel.style.display="none"; } function upgradeDamage(){ const tower=selectedTower; if(!tower||tower.upgrades.damage>=5||tower.type==="waste")return; const cost=damageUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.damage++; if(isIncomeTower(tower)){ tower.income+=tower.type==="farm"?45:25; setMessage(tower.name+" income upgraded to $"+Math.round(tower.income)+" per wave."); }else{ tower.damage*=1.28; tower.poison*=1.15; tower.burn*=1.15; setMessage(tower.name+" damage upgraded."); } showTowerPanel(tower); updateUI(); } function upgradeRange(){ const tower=selectedTower; if(!tower||tower.nonAttacking||tower.upgrades.range>=5)return; const cost=rangeUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.range++; tower.range+=25; setMessage(tower.name+" range upgraded."); showTowerPanel(tower); updateUI(); } function upgradeSpeed(){ const tower=selectedTower; if(!tower||tower.nonAttacking||tower.upgrades.speed>=5)return; const cost=speedUpgradeCost(tower); if(money<cost)return; money-=cost; tower.spent+=cost; tower.upgrades.speed++; tower.rate*=1.2; setMessage(tower.name+" attack speed upgraded."); showTowerPanel(tower); updateUI(); } function evolveTower(tower,index){ if(tower.evolution||totalUpgradeCount(tower)<5||money<EVOLUTION_COST)return; const evolution=(evolutions[tower.type]||[])[index]; if(!evolution)return; money-=EVOLUTION_COST; tower.spent+=EVOLUTION_COST; tower.evolution=evolution; if(evolution.damage)tower.damage*=evolution.damage; if(evolution.rate)tower.rate*=evolution.rate; if(evolution.range)tower.range+=evolution.range; if(evolution.splash)tower.splash+=evolution.splash; if(evolution.slow!==undefined)tower.slow=evolution.slow; if(evolution.poison)tower.poison=evolution.poison; if(evolution.burn)tower.burn=evolution.burn; if(evolution.chain)tower.chain=evolution.chain; if(evolution.pierce)tower.pierce=evolution.pierce; if(evolution.income)tower.income*=evolution.income; if(evolution.incomeFlat)tower.income+=evolution.incomeFlat; if(evolution.ability)tower.ability=evolution.ability; if(evolution.bossBonus)tower.bossBonus=evolution.bossBonus; if(evolution.eliteBonus)tower.eliteBonus=evolution.eliteBonus; if(evolution.invisibleBonus)tower.invisibleBonus=evolution.invisibleBonus; if(evolution.frozenBonus)tower.frozenBonus=evolution.frozenBonus; if(evolution.critChance)tower.critChance=evolution.critChance; if(evolution.critDamage)tower.critDamage=evolution.critDamage; if(evolution.ignoreArmor)tower.ignoreArmor=true; if(evolution.curse)tower.curse=evolution.curse; if(evolution.bossBuck)tower.bossBuck=evolution.bossBuck; setMessage(tower.name+" evolved into "+evolution.name+" for $"+EVOLUTION_COST+"!"); showWarning("TOWER EVOLVED: "+evolution.name); showTowerPanel(tower); updateUI(); } function activateAbility(id){ const ability=abilities[id]; if(!ability)return; if(!towers.some(tower=>tower.ability===id))return; if((abilityReady[id]||0)>gameTime)return; if(id==="airStrike"){ enemies.forEach(enemy=>{ if(!enemy.dead&&enemy.progress>=0){ damageEnemy(enemy,Math.max(250,enemy.maxHealth*.3),{ignoreArmor:true}); } }); setMessage("Air Strike launched!"); } if(id==="blizzard"){ enemies.forEach(enemy=>{ if(!enemy.dead)enemy.freezeUntil=gameTime+4; }); setMessage("Blizzard froze every enemy."); } if(id==="overdrive"){ overdriveUntil=gameTime+8; setMessage("Overdrive doubled tower speed for eight seconds."); } if(id==="supplies"){ money+=500; setMessage("Emergency Supplies delivered $500."); } if(id==="repair"){ health=Math.min(MAX_HEALTH,health+40); setMessage("Base Repair restored 40 health."); } if(id==="meteor"){ enemies.forEach(enemy=>{ if(!enemy.dead&&enemy.progress>=0){ damageEnemy(enemy,enemy.boss?500:350,{ignoreArmor:true}); } }); setMessage("Meteor strike!"); } abilityReady[id]=gameTime+ability.cooldown; updateUI(); } function showWarning(text){ warning.textContent=text; warning.style.display="block"; clearTimeout(warningTimer); warningTimer=setTimeout(()=>{ warning.style.display="none"; },2300); } function updateUI(){ money=Math.max(0,Math.floor(money)); moneyText.textContent=money; waveText.textContent=wave; bucksText.textContent=account.zombieBucks; mapText.textContent=currentMap ?currentMap.name+" ("+difficultyData().name+")" :"Lobby"; healthText.textContent=Math.ceil(health); const percent=Math.max(0,health/MAX_HEALTH*100); healthFill.style.width=percent+"%"; healthFill.style.background= percent>60?"#2ecc71": percent>30?"#f1c40f": "#e74c3c"; towerBar.querySelectorAll("button[data-tower]").forEach(button=>{ const type=button.dataset.tower; const base=towerTypes[type]; const free=account.freeTowerType===type; button.disabled= !gameActive|| paused|| (!free&&money<base.cost); let name=base.name; if(type==="human"){ name=humanTypes[account.equippedHuman].name+" Human"; } button.textContent= base.icon+ " "+ name+ (free?" (FREE)":" ($"+base.cost+")"); }); const startButton=document.getElementById("startWaveButton"); if(startButton){ startButton.disabled=!gameActive||paused||waveRunning; } abilityBar.querySelectorAll("button[data-ability]").forEach(button=>{ const id=button.dataset.ability; const unlocked=towers.some(tower=>tower.ability===id); const remaining=Math.max(0,Math.ceil((abilityReady[id]||0)-gameTime)); button.disabled=!unlocked||remaining>0||paused||!gameActive; button.textContent= abilities[id].icon+ " "+ abilities[id].name+ ( !unlocked ?" — Locked" :remaining>0 ?" — "+remaining+"s" :"" ); }); if(selectedTower&&towers.includes(selectedTower)){ showTowerPanel(selectedTower); } } function selectTowerAt(x,y){ const tower=[...towers] .reverse() .find(item=>Math.hypot(item.x-x,item.y-y)<=25); if(tower){ showTowerPanel(tower); }else{ hideTowerPanel(); } } function getCanvasPoint(event){ const rect=canvas.getBoundingClientRect(); return{ x:(event.clientX-rect.left)*(WIDTH/rect.width), y:(event.clientY-rect.top)*(HEIGHT/rect.height) }; } canvas.addEventListener("pointermove",event=>{ pointer=getCanvasPoint(event); }); canvas.addEventListener("pointerdown",event=>{ if(!gameActive||paused)return; pointer=getCanvasPoint(event); if(placementType){ if(!validPlacement(pointer.x,pointer.y)){ setMessage("That position is blocked by the path, terrain, or another tower."); return; } placeTower(placementType,pointer.x,pointer.y); return; } selectTowerAt(pointer.x,pointer.y); }); targetButton.addEventListener("click",()=>{ if(!selectedTower)return; const index=targetingModes.indexOf(selectedTower.targeting); selectedTower.targeting=targetingModes[(index+1)%targetingModes.length]; showTowerPanel(selectedTower); }); damageButton.addEventListener("click",upgradeDamage); rangeButton.addEventListener("click",upgradeRange); speedButton.addEventListener("click",upgradeSpeed); sellButton.addEventListener("click",()=>{ if(!selectedTower)return; const refund=Math.floor(selectedTower.spent*.65); money+=refund; towers=towers.filter(tower=>tower!==selectedTower); setMessage("Tower sold for $"+refund+"."); hideTowerPanel(); updateUI(); }); closeTowerButton.addEventListener("click",hideTowerPanel); continueButton.addEventListener("click",()=>{ resultOverlay.classList.remove("visible"); paused=false; wave=11; setMessage("Endless mode started at wave 11."); updateUI(); if(autoStart)scheduleAutoStart(); }); resultLobbyButton.addEventListener("click",()=>{ continueButton.style.display="inline-flex"; returnToLobby("Choose your next map and difficulty."); }); document.addEventListener("keydown",event=>{ if(event.key==="Escape"){ placementType=null; hideTowerPanel(); setMessage("Selection canceled."); } if(event.key===" "&&gameActive&&!waveRunning&&!paused){ event.preventDefault(); startWave(); } }); document.getElementById("humanShopButton").addEventListener("click",()=>{ renderHumans(); humanShop.classList.add("visible"); }); document.getElementById("closeHumanShop").addEventListener("click",()=>{ humanShop.classList.remove("visible"); renderLobby(); }); document.getElementById("missionsButton").addEventListener("click",()=>{ renderMissions(); missionsPage.classList.add("visible"); }); document.getElementById("closeMissions").addEventListener("click",()=>{ missionsPage.classList.remove("visible"); }); document.getElementById("rollTowerButton").addEventListener("click",rollFreeTower); document.getElementById("cashBoostButton").addEventListener("click",buyCashBoost); document.getElementById("permDamageButton").addEventListener("click",buyPermanentDamage); document.getElementById("permCashButton").addEventListener("click",buyPermanentCash); document.getElementById("saveButton").addEventListener("click",()=>saveAccount(true)); document.getElementById("downloadButton").addEventListener("click",downloadSave); document.getElementById("saveUpload").addEventListener("change",uploadSave); function drawBackground(){ ctx.fillStyle=currentMap?currentMap.background:"#263238"; ctx.fillRect(0,0,WIDTH,HEIGHT); if(currentMap&&["space","moon","abyss"].includes(currentMap.id)){ ctx.fillStyle="#fff"; for(let i=0;i<65;i++){ ctx.fillRect((i*173)%WIDTH,(i*97)%HEIGHT,2,2); } } if(currentMap&&currentMap.id==="storm"){ ctx.strokeStyle="#fff17688"; ctx.lineWidth=3; for(let i=0;i<8;i++){ const x=(i*181+gameTime*25)%WIDTH; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-25,55); ctx.lineTo(x+5,90); ctx.stroke(); } } } function drawPath(){ if(!currentMap)return; const path=currentMap.path; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); ctx.moveTo(path[0][0],path[0][1]); for(let i=1;i<path.length;i++){ ctx.lineTo(path[i][0],path[i][1]); } ctx.strokeStyle="#0004"; ctx.lineWidth=94; ctx.stroke(); ctx.strokeStyle=currentMap.road; ctx.lineWidth=82; ctx.stroke(); ctx.setLineDash([18,18]); ctx.strokeStyle=currentMap.line; ctx.lineWidth=8; ctx.stroke(); ctx.setLineDash([]); } function drawObstacles(){ if(!currentMap)return; currentMap.obstacles.forEach(object=>{ ctx.fillStyle=object.color; ctx.strokeStyle="#0006"; ctx.lineWidth=5; if(object.r){ ctx.beginPath(); ctx.arc(object.x,object.y,object.r,0,Math.PI*2); ctx.fill(); ctx.stroke(); }else{ ctx.fillRect( object.x-object.w/2, object.y-object.h/2, object.w, object.h ); ctx.strokeRect( object.x-object.w/2, object.y-object.h/2, object.w, object.h ); } }); } function drawTowers(){ towers.forEach(tower=>{ if(selectedTower===tower&&tower.range>0){ ctx.beginPath(); ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2); ctx.fillStyle="#ffffff18"; ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.setLineDash([8,8]); ctx.stroke(); ctx.setLineDash([]); } ctx.beginPath(); ctx.arc(tower.x,tower.y,21,0,Math.PI*2); ctx.fillStyle=tower.color; ctx.fill(); ctx.strokeStyle=tower.evolution?"#ffeb3b":"#0008"; ctx.lineWidth=tower.evolution?5:3; ctx.stroke(); ctx.font="22px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(tower.icon,tower.x,tower.y); if(tower.stunnedUntil>gameTime){ ctx.font="18px Arial"; ctx.fillText("💫",tower.x+18,tower.y-18); } }); } function enemyLabel(enemy){ if(enemy.boss)return"BOSS"; return{ fast:"F", tank:"T", armored:"A", regenerator:"R", shielded:"S", invisible:"I", healer:"+", splitter:"2" }[enemy.type]||""; } function drawEnemies(){ enemies.forEach(enemy=>{ if(enemy.dead||enemy.progress<0)return; const position=getPathPosition(enemy.progress); ctx.save(); if(enemy.type==="invisible")ctx.globalAlpha=.55; ctx.beginPath(); ctx.arc(position.x,position.y,enemy.radius,0,Math.PI*2); ctx.fillStyle=enemy.color; ctx.fill(); ctx.strokeStyle=enemy.boss?"#fff":"#1b5e20"; ctx.lineWidth=enemy.boss?5:3; ctx.stroke(); if(enemy.poisonUntil>gameTime){ ctx.strokeStyle="#76ff03"; ctx.lineWidth=4; ctx.stroke(); } if(enemy.burnUntil>gameTime){ ctx.strokeStyle="#ff5722"; ctx.lineWidth=4; ctx.stroke(); } if(enemy.freezeUntil>gameTime){ ctx.fillStyle="#b3e5fc88"; ctx.fill(); } if(enemy.shield>0){ ctx.beginPath(); ctx.arc(position.x,position.y,enemy.radius+6,0,Math.PI*2); ctx.strokeStyle="#80d8ff"; ctx.lineWidth=3; ctx.stroke(); } const width=enemy.boss?82:42; const healthPercent=Math.max(0,enemy.health/enemy.maxHealth); ctx.fillStyle="#222"; ctx.fillRect(position.x-width/2,position.y-enemy.radius-13,width,6); ctx.fillStyle= healthPercent>.6?"#2ecc71": healthPercent>.3?"#f1c40f": "#e74c3c"; ctx.fillRect( position.x-width/2, position.y-enemy.radius-13, width*healthPercent, 6 ); const label=enemyLabel(enemy); if(label){ ctx.fillStyle="#fff"; ctx.font=enemy.boss?"bold 11px Arial":"bold 15px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(label,position.x,position.y); } ctx.restore(); }); } function drawEffects(){ effects.forEach(effect=>{ ctx.beginPath(); ctx.moveTo(effect.x1,effect.y1); ctx.lineTo(effect.x2,effect.y2); ctx.strokeStyle=effect.color; ctx.lineWidth=4; ctx.stroke(); }); } function drawPlacement(){ if(!placementType)return; const tower=towerTypes[placementType]; const valid=validPlacement(pointer.x,pointer.y); if(tower.range>0){ ctx.beginPath(); ctx.arc(pointer.x,pointer.y,tower.range,0,Math.PI*2); ctx.fillStyle=valid?"#76ff0322":"#ff174422"; ctx.fill(); ctx.strokeStyle=valid?"#76ff03":"#ff1744"; ctx.lineWidth=3; ctx.setLineDash([8,8]); ctx.stroke(); ctx.setLineDash([]); } ctx.globalAlpha=.8; ctx.beginPath(); ctx.arc(pointer.x,pointer.y,21,0,Math.PI*2); ctx.fillStyle=tower.color; ctx.fill(); ctx.strokeStyle=valid?"#76ff03":"#ff1744"; ctx.lineWidth=4; ctx.stroke(); ctx.globalAlpha=1; ctx.font="22px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(tower.icon,pointer.x,pointer.y); } function draw(){ drawBackground(); if(!currentMap){ ctx.fillStyle="#fff"; ctx.font="bold 36px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("Choose a map and difficulty",WIDTH/2,HEIGHT/2); return; } drawPath(); drawObstacles(); drawTowers(); drawEnemies(); drawEffects(); drawPlacement(); } function gameLoop(timestamp){ const rawDelta=Math.min(.05,(timestamp-lastTimestamp)/1000||0); lastTimestamp=timestamp; if(gameActive&&!paused&&waveRunning){ const delta=rawDelta*speedMultiplier; gameTime+=delta; updateEnemies(delta); updateTowers(); effects=effects.filter(effect=>effect.expires>gameTime); if(waveRunning&&enemies.length===0){ finishWave(); } }else if(gameActive&&!paused){ gameTime+=rawDelta; effects=effects.filter(effect=>effect.expires>gameTime); } if(timestamp>=nextUiUpdate){ nextUiUpdate=timestamp+250; updateUI(); } draw(); requestAnimationFrame(gameLoop); } buildGameButtons(); loadAccount(); renderLobby(); renderHumans(); renderMissions(); updateUI(); requestAnimationFrame(gameLoop); </script><!-- MULTI-DEVICE CO-OP ADD-ON -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+#coopOverlay{
+  z-index:100;
+  align-items:center;
+  justify-content:flex-start;
+}
+
+.coopCard{
+  width:min(650px,95vw);
+  margin:10px auto;
+  padding:22px;
+  border:1px solid #ffffff2e;
+  border-radius:20px;
+  background:linear-gradient(155deg,#1d3128fa,#0b1611fa);
+  box-shadow:0 20px 55px #000d,0 0 35px #45aaf233;
+}
+
+.coopCard h2{
+  margin:0 0 14px;
+  color:var(--lime);
+  text-align:center;
+}
+
+.coopField{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:12px 0;
+}
+
+.coopField label{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+}
+
+.coopField input,
+.coopField select{
+  width:100%;
+  min-height:46px;
+  padding:10px 13px;
+  border:1px solid #ffffff2a;
+  border-radius:12px;
+  outline:none;
+  background:#09130f;
+  box-shadow:inset 0 2px 7px #0009;
+  color:var(--text);
+  font:inherit;
+  font-weight:800;
+  user-select:text;
+}
+
+.coopField input:focus,
+.coopField select:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px #72e06a25,inset 0 2px 7px #0009;
+}
+
+.coopButtonRow{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:15px;
+}
+
+.coopButtonRow button{
+  flex:1 1 170px;
+}
+
+#coopCodeBox{
+  margin:15px 0;
+  padding:18px;
+  border:2px dashed #72e06a88;
+  border-radius:15px;
+  background:#07110dcc;
+  text-align:center;
+}
+
+#coopRoomCode{
+  display:block;
+  margin-top:8px;
+  color:var(--yellow);
+  font-size:clamp(30px,8vw,48px);
+  font-weight:1000;
+  letter-spacing:7px;
+  text-shadow:0 0 18px #ffd54a66;
+  user-select:text;
+}
+
+#coopPlayers{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:15px 0;
+}
+
+.coopPlayer{
+  min-height:70px;
+  padding:12px;
+  border:1px solid #ffffff1f;
+  border-radius:13px;
+  background:linear-gradient(180deg,#ffffff12,#ffffff08);
+  text-align:center;
+}
+
+.coopPlayer.connected{
+  border-color:#72e06a88;
+  box-shadow:0 0 18px #72e06a22;
+}
+
+.coopPlayer strong{
+  display:block;
+  margin-bottom:5px;
+  color:var(--lime);
+}
+
+#coopStatus{
+  min-height:45px;
+  margin-top:13px;
+  padding:11px;
+  border:1px solid #ffffff1b;
+  border-radius:12px;
+  background:#ffffff0b;
+  color:#dce9e0;
+  text-align:center;
+  line-height:1.45;
+}
+
+#coopGameBadge{
+  position:fixed;
+  right:12px;
+  bottom:12px;
+  z-index:45;
+  display:none;
+  max-width:260px;
+  padding:10px 13px;
+  border:1px solid #72e06a66;
+  border-radius:12px;
+  background:#07110deb;
+  box-shadow:0 8px 22px #000a;
+  color:#eaffed;
+  font-size:12px;
+  font-weight:900;
+  pointer-events:none;
+}
+
+@media(max-width:600px){
+  #coopPlayers{
+    grid-template-columns:1fr;
+  }
+
+  .coopCard{
+    padding:15px;
+  }
+
+  #coopRoomCode{
+    letter-spacing:4px;
+  }
+}
+</style>
+<script>
+"use strict";
+
+/* -------------------------------------------------------
+   CO-OP HTML
+------------------------------------------------------- */
+
+const coopButton=document.createElement("button");
+coopButton.id="coOpButton";
+coopButton.className="blue";
+coopButton.textContent="🌐 Co-Op";
+document.getElementById("lobbyButtons").prepend(coopButton);
+
+const coopOverlay=document.createElement("div");
+coopOverlay.id="coopOverlay";
+coopOverlay.className="overlay";
+coopOverlay.innerHTML=`
+  <h1>Zombie Defense Co-Op</h1>
+  <p class="overlayIntro">
+    Create a room or enter a friend's code. The host chooses the map,
+    difficulty, and when the game starts.
+  </p>
+
+  <div class="coopCard" id="coopLoginCard">
+    <h2>Player Setup</h2>
+
+    <div class="coopField">
+      <label for="coopUsername">Username</label>
+      <input
+        id="coopUsername"
+        maxlength="18"
+        autocomplete="off"
+        placeholder="Enter your username"
+      >
+    </div>
+
+    <div class="coopField">
+      <label for="coopJoinCode">Room code</label>
+      <input
+        id="coopJoinCode"
+        maxlength="6"
+        autocomplete="off"
+        placeholder="Enter a 6-character code"
+      >
+    </div>
+
+    <div class="coopButtonRow">
+      <button id="coopCreateButton" class="green">Create Co-Op Game</button>
+      <button id="coopJoinButton" class="blue">Join Co-Op Game</button>
+      <button id="coopLoginBackButton" class="purple">Back to Lobby</button>
+    </div>
+
+    <div id="coopLoginStatus" class="hidden"></div>
+  </div>
+
+  <div class="coopCard hidden" id="coopRoomCard">
+    <h2 id="coopRoomTitle">Co-Op Waiting Room</h2>
+
+    <div id="coopCodeBox">
+      Give this code to the other player:
+      <span id="coopRoomCode">------</span>
+      <button id="coopCopyCodeButton" class="dark">Copy Code</button>
+    </div>
+
+    <div id="coopPlayers">
+      <div class="coopPlayer" id="coopHostPlayer">
+        <strong>Host</strong>
+        <span>Waiting...</span>
+      </div>
+
+      <div class="coopPlayer" id="coopGuestPlayer">
+        <strong>Player 2</strong>
+        <span>Waiting...</span>
+      </div>
+    </div>
+
+    <div class="coopField">
+      <label for="coopMapSelect">Map</label>
+      <select id="coopMapSelect"></select>
+    </div>
+
+    <div class="coopField">
+      <label for="coopDifficultySelect">Difficulty</label>
+      <select id="coopDifficultySelect">
+        <option value="easy">Easy — 5 Zombie-Bucks</option>
+        <option value="medium">Medium — 10 Zombie-Bucks</option>
+        <option value="hard">Hard — 20 Zombie-Bucks</option>
+      </select>
+    </div>
+
+    <div id="coopStatus">Waiting for a player...</div>
+
+    <div class="coopButtonRow">
+      <button id="coopStartButton" class="green" disabled>
+        Start Co-Op Game
+      </button>
+      <button id="coopLeaveButton" class="red">Leave Room</button>
+    </div>
+  </div>
+`;
+
+document.body.appendChild(coopOverlay);
+
+const coopGameBadge=document.createElement("div");
+coopGameBadge.id="coopGameBadge";
+document.body.appendChild(coopGameBadge);
+
+/* -------------------------------------------------------
+   CO-OP ELEMENTS
+------------------------------------------------------- */
+
+const coopLoginCard=document.getElementById("coopLoginCard");
+const coopRoomCard=document.getElementById("coopRoomCard");
+const coopUsername=document.getElementById("coopUsername");
+const coopJoinCode=document.getElementById("coopJoinCode");
+const coopCreateButton=document.getElementById("coopCreateButton");
+const coopJoinButton=document.getElementById("coopJoinButton");
+const coopLoginBackButton=document.getElementById("coopLoginBackButton");
+const coopRoomTitle=document.getElementById("coopRoomTitle");
+const coopRoomCode=document.getElementById("coopRoomCode");
+const coopCopyCodeButton=document.getElementById("coopCopyCodeButton");
+const coopHostPlayer=document.getElementById("coopHostPlayer");
+const coopGuestPlayer=document.getElementById("coopGuestPlayer");
+const coopMapSelect=document.getElementById("coopMapSelect");
+const coopDifficultySelect=document.getElementById("coopDifficultySelect");
+const coopStatus=document.getElementById("coopStatus");
+const coopStartButton=document.getElementById("coopStartButton");
+const coopLeaveButton=document.getElementById("coopLeaveButton");
+
+coopMapSelect.innerHTML=maps
+  .map((map,index)=>`
+    <option value="${index}" ${index>=account.unlockedMapCount?"disabled":""}>
+      ${map.name}${index>=account.unlockedMapCount?" — Locked":""}
+    </option>
+  `)
+  .join("");
+
+/* -------------------------------------------------------
+   CO-OP STATE
+------------------------------------------------------- */
+
+const coop={
+  peer:null,
+  connection:null,
+  active:false,
+  role:null,
+  username:"",
+  hostUsername:"",
+  guestUsername:"",
+  roomCode:"",
+  applying:false,
+  started:false,
+  towerNumber:0,
+  lastSnapshot:0
+};
+
+const originalStartMap=startMap;
+const originalPlaceTower=placeTower;
+const originalStartWave=startWave;
+const originalUpgradeDamage=upgradeDamage;
+const originalUpgradeRange=upgradeRange;
+const originalUpgradeSpeed=upgradeSpeed;
+const originalEvolveTower=evolveTower;
+const originalActivateAbility=activateAbility;
+const originalReturnToLobby=returnToLobby;
+const originalGameLoop=gameLoop;
+
+function coopSafeUsername(value){
+  return String(value||"")
+    .replace(/[<>]/g,"")
+    .trim()
+    .slice(0,18);
+}
+
+function coopSafeCode(value){
+  return String(value||"")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g,"")
+    .slice(0,6);
+}
+
+function coopGenerateCode(){
+  const characters="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code="";
+
+  for(let i=0;i<6;i++){
+    code+=characters[Math.floor(Math.random()*characters.length)];
+  }
+
+  return code;
+}
+
+function coopPeerId(code){
+  return "zombie-defense-v5-"+String(code).toLowerCase();
+}
+
+function coopSetStatus(text){
+  coopStatus.textContent=text;
+}
+
+function coopConnectionOpen(){
+  return Boolean(
+    coop.connection&&
+    coop.connection.open
+  );
+}
+
+function coopSend(data){
+  if(!coopConnectionOpen())return;
+
+  try{
+    coop.connection.send(data);
+  }catch(error){
+    console.error("Co-op send failed:",error);
+  }
+}
+
+function coopUpdateBadge(){
+  if(!coop.active||!coop.started){
+    coopGameBadge.style.display="none";
+    return;
+  }
+
+  coopGameBadge.style.display="block";
+  coopGameBadge.textContent=
+    "🌐 Co-Op • "+
+    (coop.role==="host"?"Host":"Player 2")+
+    " • Code "+coop.roomCode;
+}
+
+function coopRenderPlayers(){
+  coopHostPlayer.classList.toggle("connected",Boolean(coop.hostUsername));
+  coopGuestPlayer.classList.toggle("connected",Boolean(coop.guestUsername));
+
+  coopHostPlayer.querySelector("span").textContent=
+    coop.hostUsername||"Waiting...";
+
+  coopGuestPlayer.querySelector("span").textContent=
+    coop.guestUsername||"Waiting...";
+
+  coopStartButton.disabled=
+    coop.role!=="host"||
+    !coop.hostUsername||
+    !coop.guestUsername||
+    !coopConnectionOpen();
+
+  if(coop.role==="guest"){
+    coopMapSelect.disabled=true;
+    coopDifficultySelect.disabled=true;
+    coopStartButton.style.display="none";
+    coopCodeBox.querySelector("div");
+  }else{
+    coopMapSelect.disabled=false;
+    coopDifficultySelect.disabled=false;
+    coopStartButton.style.display="inline-flex";
+  }
+}
+
+function coopOpen(){
+  lobby.classList.remove("visible");
+  humanShop.classList.remove("visible");
+  missionsPage.classList.remove("visible");
+
+  coopOverlay.classList.add("visible");
+  coopLoginCard.classList.remove("hidden");
+  coopRoomCard.classList.add("hidden");
+
+  coopUsername.value=localStorage.getItem("zombieDefenseCoopUsername")||"";
+  coopJoinCode.value="";
+  coopUsername.focus();
+}
+
+function coopShowRoom(){
+  coopLoginCard.classList.add("hidden");
+  coopRoomCard.classList.remove("hidden");
+  coopRoomCode.textContent=coop.roomCode;
+  coopRoomTitle.textContent=
+    coop.role==="host"
+      ?"Co-Op Waiting Room"
+      :"Joined Co-Op Room";
+
+  coopRenderPlayers();
+}
+
+function coopDestroyPeer(){
+  if(coop.connection){
+    try{
+      coop.connection.close();
+    }catch(error){}
+  }
+
+  if(coop.peer){
+    try{
+      coop.peer.destroy();
+    }catch(error){}
+  }
+
+  coop.connection=null;
+  coop.peer=null;
+}
+
+function coopLeaveRoom(showLobby=true){
+  if(coopConnectionOpen()){
+    coopSend({
+      type:"leave",
+      username:coop.username
+    });
+  }
+
+  coopDestroyPeer();
+
+  coop.active=false;
+  coop.role=null;
+  coop.started=false;
+  coop.roomCode="";
+  coop.hostUsername="";
+  coop.guestUsername="";
+  coop.applying=false;
+
+  coopOverlay.classList.remove("visible");
+  coopLoginCard.classList.remove("hidden");
+  coopRoomCard.classList.add("hidden");
+  coopGameBadge.style.display="none";
+
+  if(showLobby){
+    originalReturnToLobby("Left the co-op room.");
+  }
+}
+
+function coopHandleDisconnect(){
+  if(!coop.active)return;
+
+  if(coop.role==="host"){
+    coop.guestUsername="";
+    coop.connection=null;
+    coopSetStatus("Player 2 disconnected. Waiting for another player...");
+    coopRenderPlayers();
+
+    if(gameActive){
+      paused=true;
+      setMessage("Player 2 disconnected. The co-op game is paused.");
+    }
+  }else{
+    coop.connection=null;
+    paused=true;
+    coopSetStatus("Disconnected from the host.");
+
+    if(gameActive){
+      setMessage("Disconnected from the host. The game is paused.");
+    }
+  }
+}
+
+function coopWireConnection(connection){
+  coop.connection=connection;
+
+  connection.on("open",()=>{
+    if(coop.role==="guest"){
+      coopSend({
+        type:"join",
+        username:coop.username
+      });
+
+      coopSetStatus("Connected. Waiting for the host to start.");
+    }else{
+      coopSetStatus("Player connected. Waiting for their username...");
+    }
+
+    coopRenderPlayers();
+  });
+
+  connection.on("data",data=>{
+    coopReceive(data);
+  });
+
+  connection.on("close",()=>{
+    coopHandleDisconnect();
+  });
+
+  connection.on("error",error=>{
+    console.error("Co-op connection error:",error);
+    coopSetStatus("Connection error. Try leaving and joining again.");
+  });
+}
+
+/* -------------------------------------------------------
+   CREATE AND JOIN
+------------------------------------------------------- */
+
+function coopCreateRoom(){
+  const username=coopSafeUsername(coopUsername.value);
+
+  if(!username){
+    alert("Enter a username first.");
+    coopUsername.focus();
+    return;
+  }
+
+  if(typeof Peer==="undefined"){
+    alert("The multiplayer service did not load. Refresh and try again.");
+    return;
+  }
+
+  coopDestroyPeer();
+
+  coop.username=username;
+  coop.hostUsername=username;
+  coop.guestUsername="";
+  coop.roomCode=coopGenerateCode();
+  coop.role="host";
+  coop.active=true;
+  coop.started=false;
+
+  localStorage.setItem("zombieDefenseCoopUsername",username);
+
+  coopShowRoom();
+  coopSetStatus("Creating room...");
+
+  coop.peer=new Peer(coopPeerId(coop.roomCode),{
+    debug:0
+  });
+
+  coop.peer.on("open",()=>{
+    coopSetStatus("Room created. Give the code to Player 2.");
+    coopRenderPlayers();
+  });
+
+  coop.peer.on("connection",connection=>{
+    if(coopConnectionOpen()){
+      connection.on("open",()=>{
+        connection.send({
+          type:"roomFull"
+        });
+
+        connection.close();
+      });
+
+      return;
+    }
+
+    coopWireConnection(connection);
+  });
+
+  coop.peer.on("error",error=>{
+    console.error("Co-op host error:",error);
+
+    if(error.type==="unavailable-id"){
+      coopSetStatus("That room code was taken. Create another room.");
+    }else{
+      coopSetStatus("Could not create the room. Check your connection.");
+    }
+  });
+}
+
+function coopJoinRoom(){
+  const username=coopSafeUsername(coopUsername.value);
+  const code=coopSafeCode(coopJoinCode.value);
+
+  if(!username){
+    alert("Enter a username first.");
+    coopUsername.focus();
+    return;
+  }
+
+  if(code.length!==6){
+    alert("Enter the full 6-character room code.");
+    coopJoinCode.focus();
+    return;
+  }
+
+  if(typeof Peer==="undefined"){
+    alert("The multiplayer service did not load. Refresh and try again.");
+    return;
+  }
+
+  coopDestroyPeer();
+
+  coop.username=username;
+  coop.hostUsername="";
+  coop.guestUsername=username;
+  coop.roomCode=code;
+  coop.role="guest";
+  coop.active=true;
+  coop.started=false;
+
+  localStorage.setItem("zombieDefenseCoopUsername",username);
+
+  coopShowRoom();
+  coopSetStatus("Connecting to room "+code+"...");
+
+  coop.peer=new Peer(undefined,{
+    debug:0
+  });
+
+  coop.peer.on("open",()=>{
+    const connection=coop.peer.connect(coopPeerId(code),{
+      reliable:true,
+      serialization:"json"
+    });
+
+    coopWireConnection(connection);
+
+    setTimeout(()=>{
+      if(
+        coop.active&&
+        coop.role==="guest"&&
+        !coopConnectionOpen()
+      ){
+        coopSetStatus(
+          "Could not find that room. Check the code and make sure the host is waiting."
+        );
+      }
+    },8000);
+  });
+
+  coop.peer.on("error",error=>{
+    console.error("Co-op guest error:",error);
+    coopSetStatus("Could not join that room. Check the code.");
+  });
+}
+
+/* -------------------------------------------------------
+   ROOM SETTINGS
+------------------------------------------------------- */
+
+function coopSendRoomSettings(){
+  if(coop.role!=="host")return;
+
+  coopSend({
+    type:"roomSettings",
+    mapIndex:Number(coopMapSelect.value),
+    difficulty:coopDifficultySelect.value,
+    hostUsername:coop.hostUsername,
+    guestUsername:coop.guestUsername
+  });
+}
+
+function coopStartGame(){
+  if(
+    coop.role!=="host"||
+    !coopConnectionOpen()||
+    !coop.guestUsername
+  ){
+    return;
+  }
+
+  const mapIndex=Number(coopMapSelect.value);
+  const difficulty=coopDifficultySelect.value;
+
+  if(mapIndex<0||mapIndex>=account.unlockedMapCount){
+    coopSetStatus("That map is not unlocked.");
+    return;
+  }
+
+  coop.started=true;
+  coop.applying=true;
+  originalStartMap(mapIndex,difficulty);
+  coop.applying=false;
+
+  coopOverlay.classList.remove("visible");
+
+  coopSend({
+    type:"startGame",
+    mapIndex,
+    difficulty
+  });
+
+  coopUpdateBadge();
+  coopSendSnapshot(true);
+  setMessage(
+    "Co-op started with "+coop.guestUsername+
+    ". Both players can place and upgrade towers."
+  );
+}
+
+/* -------------------------------------------------------
+   AUTHORITATIVE HOST STATE
+------------------------------------------------------- */
+
+function coopEnsureTowerIds(){
+  towers.forEach(tower=>{
+    if(!tower._coopId){
+      coop.towerNumber++;
+      tower._coopId="tower-"+coop.towerNumber;
+    }
+  });
+}
+
+function coopCreateSnapshot(){
+  coopEnsureTowerIds();
+
+  const mapIndex=currentMap
+    ?maps.findIndex(map=>map.id===currentMap.id)
+    :-1;
+
+  return{
+    type:"snapshot",
+    mapIndex,
+    currentDifficulty,
+    money,
+    health,
+    wave,
+    towers,
+    enemies,
+    effects,
+    waveRunning,
+    gameActive,
+    paused,
+    autoStart,
+    speedMultiplier,
+    gameTime,
+    bossStartHealth,
+    overdriveUntil,
+    abilityReady,
+    runUsedFarm,
+    runOnlyHumans,
+    runPlacedTower,
+    selectedTowerId:selectedTower?selectedTower._coopId:null,
+    messageText:message.textContent,
+    result:{
+      visible:resultOverlay.classList.contains("visible"),
+      title:resultTitle.textContent,
+      text:resultText.textContent,
+      continueDisplay:continueButton.style.display
+    },
+    boss:{
+      visible:bossPanel.style.display==="block",
+      name:bossName.textContent,
+      width:bossHealthFill.style.width
+    },
+    warning:{
+      visible:warning.style.display==="block",
+      text:warning.textContent
+    }
+  };
+}
+
+function coopSendSnapshot(force=false){
+  if(
+    !coop.active||
+    coop.role!=="host"||
+    !coop.started||
+    !coopConnectionOpen()
+  ){
+    return;
+  }
+
+  const now=performance.now();
+
+  if(!force&&now-coop.lastSnapshot<100)return;
+
+  coop.lastSnapshot=now;
+  coopSend(coopCreateSnapshot());
+}
+
+function coopApplySnapshot(state){
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !state||
+    state.mapIndex<0||
+    !maps[state.mapIndex]
+  ){
+    return;
+  }
+
+  coop.applying=true;
+  coop.started=true;
+
+  currentMap=maps[state.mapIndex];
+  currentDifficulty=difficulties[state.currentDifficulty]
+    ?state.currentDifficulty
+    :"medium";
+
+  money=Number(state.money)||0;
+  health=Math.max(0,Number(state.health)||0);
+  wave=Math.max(1,Number(state.wave)||1);
+
+  towers=Array.isArray(state.towers)?state.towers:[];
+  enemies=Array.isArray(state.enemies)?state.enemies:[];
+  effects=Array.isArray(state.effects)?state.effects:[];
+
+  waveRunning=Boolean(state.waveRunning);
+  gameActive=Boolean(state.gameActive);
+  paused=Boolean(state.paused);
+  autoStart=Boolean(state.autoStart);
+  speedMultiplier=Number(state.speedMultiplier)||1;
+  gameTime=Number(state.gameTime)||0;
+  bossStartHealth=Number(state.bossStartHealth)||MAX_HEALTH;
+  overdriveUntil=Number(state.overdriveUntil)||0;
+  abilityReady=state.abilityReady||{};
+  runUsedFarm=Boolean(state.runUsedFarm);
+  runOnlyHumans=Boolean(state.runOnlyHumans);
+  runPlacedTower=Boolean(state.runPlacedTower);
+
+  selectedTower=state.selectedTowerId
+    ?towers.find(tower=>tower._coopId===state.selectedTowerId)||null
+    :null;
+
+  lobby.classList.remove("visible");
+  coopOverlay.classList.remove("visible");
+  towerBar.classList.remove("hidden");
+  controlBar.classList.remove("hidden");
+  abilityBar.classList.remove("hidden");
+
+  if(state.messageText){
+    message.textContent=state.messageText;
+  }
+
+  if(state.result&&state.result.visible){
+    resultTitle.textContent=state.result.title||"Round Complete";
+    resultText.textContent=state.result.text||"";
+    continueButton.style.display=state.result.continueDisplay||"inline-flex";
+    resultOverlay.classList.add("visible");
+  }else{
+    resultOverlay.classList.remove("visible");
+  }
+
+  if(state.boss&&state.boss.visible){
+    bossPanel.style.display="block";
+    bossName.textContent=state.boss.name||"Boss";
+    bossHealthFill.style.width=state.boss.width||"100%";
+  }else{
+    bossPanel.style.display="none";
+  }
+
+  if(state.warning&&state.warning.visible){
+    warning.textContent=state.warning.text||"";
+    warning.style.display="block";
+  }else{
+    warning.style.display="none";
+  }
+
+  if(selectedTower){
+    showTowerPanel(selectedTower);
+  }else{
+    towerPanel.style.display="none";
+  }
+
+  updateUI();
+  coopUpdateBadge();
+  coop.applying=false;
+}
+
+/* -------------------------------------------------------
+   PLAYER COMMANDS
+------------------------------------------------------- */
+
+function coopSendCommand(action,payload={}){
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.started||
+    !coopConnectionOpen()
+  ){
+    return;
+  }
+
+  coopSend({
+    type:"command",
+    action,
+    payload
+  });
+}
+
+function coopFindHostTower(id){
+  return towers.find(tower=>tower._coopId===id)||null;
+}
+
+function coopRunHostCommand(action,payload={}){
+  if(coop.role!=="host"||!coop.started)return;
+
+  coop.applying=true;
+
+  if(action==="placeTower"){
+    const type=payload.type;
+    const x=Number(payload.x);
+    const y=Number(payload.y);
+
+    if(
+      towerTypes[type]&&
+      Number.isFinite(x)&&
+      Number.isFinite(y)&&
+      validPlacement(x,y)
+    ){
+      originalPlaceTower(type,x,y);
+      coopEnsureTowerIds();
+    }
+  }
+
+  if(action==="startWave"){
+    originalStartWave();
+  }
+
+  if(action==="target"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      const index=targetingModes.indexOf(tower.targeting);
+      tower.targeting=
+        targetingModes[(index+1)%targetingModes.length];
+
+      selectedTower=tower;
+      showTowerPanel(tower);
+    }
+  }
+
+  if(action==="upgradeDamage"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      selectedTower=tower;
+      originalUpgradeDamage();
+    }
+  }
+
+  if(action==="upgradeRange"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      selectedTower=tower;
+      originalUpgradeRange();
+    }
+  }
+
+  if(action==="upgradeSpeed"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      selectedTower=tower;
+      originalUpgradeSpeed();
+    }
+  }
+
+  if(action==="evolve"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      selectedTower=tower;
+      originalEvolveTower(tower,Number(payload.index));
+    }
+  }
+
+  if(action==="sell"){
+    const tower=coopFindHostTower(payload.towerId);
+
+    if(tower){
+      const refund=Math.floor(tower.spent*.65);
+      money+=refund;
+      towers=towers.filter(item=>item!==tower);
+      selectedTower=null;
+      towerPanel.style.display="none";
+      setMessage(coop.guestUsername+" sold a tower for $"+refund+".");
+      updateUI();
+    }
+  }
+
+  if(action==="ability"){
+    originalActivateAbility(payload.id);
+  }
+
+  coop.applying=false;
+  coopSendSnapshot(true);
+}
+
+/* -------------------------------------------------------
+   NETWORK MESSAGE HANDLER
+------------------------------------------------------- */
+
+function coopReceive(data){
+  if(!data||typeof data!=="object")return;
+
+  if(data.type==="roomFull"){
+    coopSetStatus("That room already has two players.");
+    return;
+  }
+
+  if(data.type==="join"&&coop.role==="host"){
+    coop.guestUsername=
+      coopSafeUsername(data.username)||"Player 2";
+
+    coopSetStatus(
+      coop.guestUsername+
+      " joined. Choose the map and difficulty, then press Start."
+    );
+
+    coopRenderPlayers();
+    coopSendRoomSettings();
+    return;
+  }
+
+  if(data.type==="roomSettings"&&coop.role==="guest"){
+    coop.hostUsername=
+      coopSafeUsername(data.hostUsername)||"Host";
+
+    coop.guestUsername=
+      coopSafeUsername(data.guestUsername)||coop.username;
+
+    if(maps[data.mapIndex]){
+      coopMapSelect.value=String(data.mapIndex);
+    }
+
+    if(difficulties[data.difficulty]){
+      coopDifficultySelect.value=data.difficulty;
+    }
+
+    coopSetStatus(
+      "Connected to "+coop.hostUsername+
+      ". Waiting for the host to start."
+    );
+
+    coopRenderPlayers();
+    return;
+  }
+
+  if(data.type==="startGame"&&coop.role==="guest"){
+    if(!maps[data.mapIndex])return;
+
+    coop.started=true;
+    coop.applying=true;
+    originalStartMap(data.mapIndex,data.difficulty);
+    coop.applying=false;
+
+    coopOverlay.classList.remove("visible");
+    coopUpdateBadge();
+
+    setMessage(
+      "Joined "+coop.hostUsername+
+      "'s co-op game. You can place and upgrade towers."
+    );
+
+    return;
+  }
+
+  if(data.type==="snapshot"&&coop.role==="guest"){
+    coopApplySnapshot(data);
+    return;
+  }
+
+  if(data.type==="command"&&coop.role==="host"){
+    coopRunHostCommand(data.action,data.payload||{});
+    return;
+  }
+
+  if(data.type==="returnToRoom"){
+    coop.started=false;
+    gameActive=false;
+    waveRunning=false;
+    paused=false;
+    currentMap=null;
+    towers=[];
+    enemies=[];
+    effects=[];
+
+    towerBar.classList.add("hidden");
+    controlBar.classList.add("hidden");
+    abilityBar.classList.add("hidden");
+    resultOverlay.classList.remove("visible");
+    bossPanel.style.display="none";
+
+    coopOverlay.classList.add("visible");
+    coopLoginCard.classList.add("hidden");
+    coopRoomCard.classList.remove("hidden");
+
+    coopSetStatus(
+      coop.role==="host"
+        ?"Choose another map and start when ready."
+        :"Waiting for the host to choose another map."
+    );
+
+    coopRenderPlayers();
+    coopUpdateBadge();
+    updateUI();
+    return;
+  }
+
+  if(data.type==="leave"){
+    coopHandleDisconnect();
+  }
+}
+
+/* -------------------------------------------------------
+   FUNCTION PATCHES
+------------------------------------------------------- */
+
+placeTower=function(type,x,y){
+  if(
+    coop.active&&
+    coop.role==="guest"&&
+    coop.started&&
+    !coop.applying
+  ){
+    coopSendCommand("placeTower",{type,x,y});
+    placementType=null;
+    setMessage("Tower placement sent to the host.");
+    return;
+  }
+
+  const previousCount=towers.length;
+  originalPlaceTower(type,x,y);
+
+  if(
+    coop.active&&
+    coop.role==="host"&&
+    towers.length>previousCount
+  ){
+    coopEnsureTowerIds();
+    coopSendSnapshot(true);
+  }
+};
+
+returnToLobby=function(text="Choose a map and difficulty."){
+  originalReturnToLobby(text);
+
+  if(
+    coop.active&&
+    coop.started&&
+    !coop.applying
+  ){
+    coop.started=false;
+
+    if(coop.role==="host"){
+      coopSend({
+        type:"returnToRoom"
+      });
+    }
+
+    coopOverlay.classList.add("visible");
+    coopLoginCard.classList.add("hidden");
+    coopRoomCard.classList.remove("hidden");
+
+    coopSetStatus(
+      coop.role==="host"
+        ?"Choose another map and start when ready."
+        :"Waiting for the host to choose another map."
+    );
+
+    coopRenderPlayers();
+    coopUpdateBadge();
+  }
+};
+
+gameLoop=function(timestamp){
+  if(
+    coop.active&&
+    coop.role==="guest"&&
+    coop.started
+  ){
+    lastTimestamp=timestamp;
+
+    if(timestamp>=nextUiUpdate){
+      nextUiUpdate=timestamp+250;
+      updateUI();
+    }
+
+    draw();
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  originalGameLoop(timestamp);
+
+  if(
+    coop.active&&
+    coop.role==="host"&&
+    coop.started
+  ){
+    coopSendSnapshot(false);
+  }
+};
+
+/* -------------------------------------------------------
+   GUEST CONTROL INTERCEPTION
+------------------------------------------------------- */
+
+controlBar.addEventListener("click",event=>{
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.started
+  ){
+    return;
+  }
+
+  const button=event.target.closest("button");
+  if(!button)return;
+
+  if(button.id==="startWaveButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can start waves.");
+  }
+
+  if(button.id==="autoButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can change Auto Start.");
+  }
+
+  if(button.id==="gameSpeedButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can change game speed.");
+  }
+
+  if(button.id==="rewardButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can use the Supply Drop.");
+  }
+
+  if(button.id==="lobbyButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can return everyone to the lobby.");
+  }
+},true);
+
+towerPanel.addEventListener("click",event=>{
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.started
+  ){
+    return;
+  }
+
+  const button=event.target.closest("button");
+  if(!button||button.id==="closeTowerButton")return;
+
+  const towerId=selectedTower&&selectedTower._coopId;
+  if(!towerId)return;
+
+  if(button.id==="targetButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    coopSendCommand("target",{towerId});
+  }
+
+  if(button.id==="damageButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    coopSendCommand("upgradeDamage",{towerId});
+  }
+
+  if(button.id==="rangeButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    coopSendCommand("upgradeRange",{towerId});
+  }
+
+  if(button.id==="speedButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    coopSendCommand("upgradeSpeed",{towerId});
+  }
+
+  if(button.id==="sellButton"){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    coopSendCommand("sell",{towerId});
+    towerPanel.style.display="none";
+    selectedTower=null;
+  }
+
+  if(button.dataset.evolution!==undefined){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    coopSendCommand("evolve",{
+      towerId,
+      index:Number(button.dataset.evolution)
+    });
+  }
+},true);
+
+abilityBar.addEventListener("click",event=>{
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.started
+  ){
+    return;
+  }
+
+  const button=event.target.closest("button[data-ability]");
+  if(!button)return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  coopSendCommand("ability",{
+    id:button.dataset.ability
+  });
+},true);
+
+document.addEventListener("keydown",event=>{
+  if(
+    coop.active&&
+    coop.role==="guest"&&
+    coop.started&&
+    event.key===" "
+  ){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setMessage("Only the host can start waves.");
+  }
+},true);
+
+/* -------------------------------------------------------
+   UI EVENTS
+------------------------------------------------------- */
+
+coopButton.addEventListener("click",coopOpen);
+coopCreateButton.addEventListener("click",coopCreateRoom);
+coopJoinButton.addEventListener("click",coopJoinRoom);
+
+coopLoginBackButton.addEventListener("click",()=>{
+  coopOverlay.classList.remove("visible");
+  lobby.classList.add("visible");
+});
+
+coopLeaveButton.addEventListener("click",()=>{
+  coopLeaveRoom(true);
+});
+
+coopCopyCodeButton.addEventListener("click",async()=>{
+  try{
+    await navigator.clipboard.writeText(coop.roomCode);
+    coopSetStatus("Room code copied: "+coop.roomCode);
+  }catch(error){
+    coopSetStatus("Room code: "+coop.roomCode);
+  }
+});
+
+coopMapSelect.addEventListener("change",()=>{
+  if(coop.role!=="host")return;
+
+  const map=maps[Number(coopMapSelect.value)];
+
+  if(map){
+    coopDifficultySelect.value=recommendedDifficulty(map);
+  }
+
+  coopSendRoomSettings();
+});
+
+coopDifficultySelect.addEventListener("change",()=>{
+  if(coop.role==="host"){
+    coopSendRoomSettings();
+  }
+});
+
+coopStartButton.addEventListener("click",coopStartGame);
+
+coopJoinCode.addEventListener("input",()=>{
+  coopJoinCode.value=coopSafeCode(coopJoinCode.value);
+});
+
+window.addEventListener("beforeunload",()=>{
+  if(coopConnectionOpen()){
+    coopSend({
+      type:"leave",
+      username:coop.username
+    });
+  }
+
+  coopDestroyPeer();
+});
+</script>
+<!-- END MULTI-DEVICE CO-OP ADD-ON --> </body> </html>
