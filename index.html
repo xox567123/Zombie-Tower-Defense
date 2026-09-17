@@ -807,11 +807,23 @@ button:disabled{
   z-index:100;
   align-items:center;
   justify-content:flex-start;
+  min-height:100vh;
+  min-height:100dvh;
+  padding:
+    max(12px,env(safe-area-inset-top))
+    max(12px,env(safe-area-inset-right))
+    max(12px,env(safe-area-inset-bottom))
+    max(12px,env(safe-area-inset-left));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
 
 .coopCard{
-  width:min(650px,95vw);
-  margin:10px auto;
+  box-sizing:border-box;
+  width:min(650px,100%);
+  margin:10px auto 30px;
   padding:22px;
   border:1px solid #ffffff2e;
   border-radius:20px;
@@ -840,8 +852,9 @@ button:disabled{
 
 .coopField input,
 .coopField select{
+  box-sizing:border-box;
   width:100%;
-  min-height:46px;
+  min-height:48px;
   padding:10px 13px;
   border:1px solid #ffffff2a;
   border-radius:12px;
@@ -850,8 +863,11 @@ button:disabled{
   box-shadow:inset 0 2px 7px #0009;
   color:var(--text);
   font:inherit;
+  font-size:16px;
   font-weight:800;
   user-select:text;
+  -webkit-user-select:text;
+  touch-action:manipulation;
 }
 
 .coopField input:focus,
@@ -866,6 +882,13 @@ button:disabled{
   flex-wrap:wrap;
   gap:10px;
   margin-top:15px;
+}
+
+.coopButtonRow button,
+#coopCopyCodeButton{
+  min-height:48px;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
 
 .coopButtonRow button{
@@ -883,13 +906,16 @@ button:disabled{
 
 #coopRoomCode{
   display:block;
-  margin-top:8px;
+  margin:8px 0 12px;
   color:var(--yellow);
-  font-size:clamp(30px,8vw,48px);
+  font-size:clamp(28px,8vw,48px);
   font-weight:1000;
   letter-spacing:7px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
   text-shadow:0 0 18px #ffd54a66;
   user-select:text;
+  -webkit-user-select:text;
 }
 
 #coopPlayers{
@@ -900,12 +926,15 @@ button:disabled{
 }
 
 .coopPlayer{
+  box-sizing:border-box;
+  min-width:0;
   min-height:70px;
   padding:12px;
   border:1px solid #ffffff1f;
   border-radius:13px;
   background:linear-gradient(180deg,#ffffff12,#ffffff08);
   text-align:center;
+  overflow-wrap:anywhere;
 }
 
 .coopPlayer.connected{
@@ -929,15 +958,17 @@ button:disabled{
   color:#dce9e0;
   text-align:center;
   line-height:1.45;
+  overflow-wrap:anywhere;
 }
 
 #coopGameBadge{
   position:fixed;
-  right:12px;
-  bottom:12px;
+  right:max(12px,env(safe-area-inset-right));
+  bottom:max(12px,env(safe-area-inset-bottom));
   z-index:45;
   display:none;
-  max-width:260px;
+  max-width:min(260px,calc(100vw - 24px));
+  box-sizing:border-box;
   padding:10px 13px;
   border:1px solid #72e06a66;
   border-radius:12px;
@@ -946,25 +977,108 @@ button:disabled{
   color:#eaffed;
   font-size:12px;
   font-weight:900;
+  overflow-wrap:anywhere;
   pointer-events:none;
 }
 
 @media(max-width:600px){
+  #coopOverlay{
+    padding:
+      max(8px,env(safe-area-inset-top))
+      max(8px,env(safe-area-inset-right))
+      max(8px,env(safe-area-inset-bottom))
+      max(8px,env(safe-area-inset-left));
+  }
+
   #coopPlayers{
     grid-template-columns:1fr;
   }
 
   .coopCard{
+    margin:6px auto 20px;
     padding:15px;
+    border-radius:16px;
+  }
+
+  .coopButtonRow{
+    flex-direction:column;
+  }
+
+  .coopButtonRow button{
+    width:100%;
+    flex:0 0 auto;
   }
 
   #coopRoomCode{
     letter-spacing:4px;
   }
+
+  #coopGameBadge{
+    right:max(8px,env(safe-area-inset-right));
+    bottom:max(8px,env(safe-area-inset-bottom));
+  }
+}
+
+@media(max-width:360px){
+  .coopCard{
+    padding:12px;
+  }
+
+  #coopCodeBox{
+    padding:13px 8px;
+  }
+
+  #coopRoomCode{
+    font-size:27px;
+    letter-spacing:3px;
+  }
+}
+
+@media(orientation:landscape) and (max-height:550px){
+  #coopOverlay{
+    align-items:flex-start;
+  }
+
+  .coopCard{
+    margin-top:4px;
+  }
 }
 </style>
 <script>
 "use strict";
+
+if(!window.__zombieDefenseCoopLoaded){
+window.__zombieDefenseCoopLoaded=true;
+
+/* -------------------------------------------------------
+   CONNECTION SETTINGS
+------------------------------------------------------- */
+
+const COOP_ICE_SERVERS=[
+  {
+    urls:[
+      "stun:stun.l.google.com:19302",
+      "stun:stun1.l.google.com:19302"
+    ]
+  },
+  {
+    urls:"stun:stun.cloudflare.com:3478"
+  }
+];
+
+const COOP_PEER_OPTIONS={
+  debug:0,
+  config:{
+    iceServers:COOP_ICE_SERVERS,
+    iceCandidatePoolSize:10
+  }
+};
+
+const COOP_CONNECT_TIMEOUT=12000;
+const COOP_RECONNECT_DELAY=1800;
+const COOP_MAX_RECONNECT_ATTEMPTS=6;
+const COOP_HEARTBEAT_INTERVAL=5000;
+const COOP_SNAPSHOT_INTERVAL=125;
 
 /* -------------------------------------------------------
    CO-OP HTML
@@ -973,14 +1087,21 @@ button:disabled{
 const coopButton=document.createElement("button");
 coopButton.id="coOpButton";
 coopButton.className="blue";
+coopButton.type="button";
 coopButton.textContent="🌐 Co-Op";
-document.getElementById("lobbyButtons").prepend(coopButton);
+
+const lobbyButtonsElement=document.getElementById("lobbyButtons");
+
+if(lobbyButtonsElement){
+  lobbyButtonsElement.prepend(coopButton);
+}
 
 const coopOverlay=document.createElement("div");
 coopOverlay.id="coopOverlay";
 coopOverlay.className="overlay";
 coopOverlay.innerHTML=`
   <h1>Zombie Defense Co-Op</h1>
+
   <p class="overlayIntro">
     Create a room or enter a friend's code. The host chooses the map,
     difficulty, and when the game starts.
@@ -993,8 +1114,12 @@ coopOverlay.innerHTML=`
       <label for="coopUsername">Username</label>
       <input
         id="coopUsername"
+        type="text"
         maxlength="18"
-        autocomplete="off"
+        autocomplete="nickname"
+        autocapitalize="words"
+        enterkeyhint="next"
+        spellcheck="false"
         placeholder="Enter your username"
       >
     </div>
@@ -1003,16 +1128,41 @@ coopOverlay.innerHTML=`
       <label for="coopJoinCode">Room code</label>
       <input
         id="coopJoinCode"
+        type="text"
         maxlength="6"
         autocomplete="off"
+        autocapitalize="characters"
+        enterkeyhint="go"
+        inputmode="text"
+        spellcheck="false"
         placeholder="Enter a 6-character code"
       >
     </div>
 
     <div class="coopButtonRow">
-      <button id="coopCreateButton" class="green">Create Co-Op Game</button>
-      <button id="coopJoinButton" class="blue">Join Co-Op Game</button>
-      <button id="coopLoginBackButton" class="purple">Back to Lobby</button>
+      <button
+        id="coopCreateButton"
+        type="button"
+        class="green"
+      >
+        Create Co-Op Game
+      </button>
+
+      <button
+        id="coopJoinButton"
+        type="button"
+        class="blue"
+      >
+        Join Co-Op Game
+      </button>
+
+      <button
+        id="coopLoginBackButton"
+        type="button"
+        class="purple"
+      >
+        Back to Lobby
+      </button>
     </div>
 
     <div id="coopLoginStatus" class="hidden"></div>
@@ -1023,8 +1173,16 @@ coopOverlay.innerHTML=`
 
     <div id="coopCodeBox">
       Give this code to the other player:
+
       <span id="coopRoomCode">------</span>
-      <button id="coopCopyCodeButton" class="dark">Copy Code</button>
+
+      <button
+        id="coopCopyCodeButton"
+        type="button"
+        class="dark"
+      >
+        Copy Code
+      </button>
     </div>
 
     <div id="coopPlayers">
@@ -1046,6 +1204,7 @@ coopOverlay.innerHTML=`
 
     <div class="coopField">
       <label for="coopDifficultySelect">Difficulty</label>
+
       <select id="coopDifficultySelect">
         <option value="easy">Easy — 5 Zombie-Bucks</option>
         <option value="medium">Medium — 10 Zombie-Bucks</option>
@@ -1056,10 +1215,22 @@ coopOverlay.innerHTML=`
     <div id="coopStatus">Waiting for a player...</div>
 
     <div class="coopButtonRow">
-      <button id="coopStartButton" class="green" disabled>
+      <button
+        id="coopStartButton"
+        type="button"
+        class="green"
+        disabled
+      >
         Start Co-Op Game
       </button>
-      <button id="coopLeaveButton" class="red">Leave Room</button>
+
+      <button
+        id="coopLeaveButton"
+        type="button"
+        class="red"
+      >
+        Leave Room
+      </button>
     </div>
   </div>
 `;
@@ -1094,7 +1265,10 @@ const coopLeaveButton=document.getElementById("coopLeaveButton");
 
 coopMapSelect.innerHTML=maps
   .map((map,index)=>`
-    <option value="${index}" ${index>=account.unlockedMapCount?"disabled":""}>
+    <option
+      value="${index}"
+      ${index>=account.unlockedMapCount?"disabled":""}
+    >
       ${map.name}${index>=account.unlockedMapCount?" — Locked":""}
     </option>
   `)
@@ -1116,7 +1290,14 @@ const coop={
   applying:false,
   started:false,
   towerNumber:0,
-  lastSnapshot:0
+  lastSnapshot:0,
+  joinTimer:null,
+  reconnectTimer:null,
+  heartbeatTimer:null,
+  reconnectAttempts:0,
+  lastPong:0,
+  closing:false,
+  allowReconnect:true
 };
 
 const originalStartMap=startMap;
@@ -1130,9 +1311,14 @@ const originalActivateAbility=activateAbility;
 const originalReturnToLobby=returnToLobby;
 const originalGameLoop=gameLoop;
 
+/* -------------------------------------------------------
+   GENERAL HELPERS
+------------------------------------------------------- */
+
 function coopSafeUsername(value){
   return String(value||"")
     .replace(/[<>]/g,"")
+    .replace(/\s+/g," ")
     .trim()
     .slice(0,18);
 }
@@ -1148,6 +1334,20 @@ function coopGenerateCode(){
   const characters="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code="";
 
+  if(
+    window.crypto&&
+    typeof window.crypto.getRandomValues==="function"
+  ){
+    const values=new Uint32Array(6);
+    window.crypto.getRandomValues(values);
+
+    for(let i=0;i<values.length;i++){
+      code+=characters[values[i]%characters.length];
+    }
+
+    return code;
+  }
+
   for(let i=0;i<6;i++){
     code+=characters[Math.floor(Math.random()*characters.length)];
   }
@@ -1156,11 +1356,15 @@ function coopGenerateCode(){
 }
 
 function coopPeerId(code){
-  return "zombie-defense-v5-"+String(code).toLowerCase();
+  return "zombie-defense-v6-"+String(code).toLowerCase();
+}
+
+function coopCreatePeer(id){
+  return new Peer(id,COOP_PEER_OPTIONS);
 }
 
 function coopSetStatus(text){
-  coopStatus.textContent=text;
+  coopStatus.textContent=String(text||"");
 }
 
 function coopConnectionOpen(){
@@ -1170,14 +1374,92 @@ function coopConnectionOpen(){
   );
 }
 
+function coopClearTimer(name){
+  if(coop[name]){
+    clearTimeout(coop[name]);
+    clearInterval(coop[name]);
+    coop[name]=null;
+  }
+}
+
+function coopClearConnectionTimers(){
+  coopClearTimer("joinTimer");
+  coopClearTimer("reconnectTimer");
+  coopClearTimer("heartbeatTimer");
+}
+
+function coopReadStoredUsername(){
+  try{
+    return localStorage.getItem("zombieDefenseCoopUsername")||"";
+  }catch(error){
+    return "";
+  }
+}
+
+function coopStoreUsername(username){
+  try{
+    localStorage.setItem("zombieDefenseCoopUsername",username);
+  }catch(error){}
+}
+
 function coopSend(data){
-  if(!coopConnectionOpen())return;
+  if(!coopConnectionOpen())return false;
 
   try{
     coop.connection.send(data);
+    return true;
   }catch(error){
     console.error("Co-op send failed:",error);
+    return false;
   }
+}
+
+function coopClosestButton(target){
+  if(!target)return null;
+
+  if(target.nodeType===Node.TEXT_NODE){
+    target=target.parentElement;
+  }
+
+  return target&&typeof target.closest==="function"
+    ?target.closest("button")
+    :null;
+}
+
+async function coopCopyText(text){
+  if(
+    navigator.clipboard&&
+    window.isSecureContext
+  ){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(error){}
+  }
+
+  const textarea=document.createElement("textarea");
+  textarea.value=text;
+  textarea.setAttribute("readonly","");
+  textarea.style.position="fixed";
+  textarea.style.left="-9999px";
+  textarea.style.top="0";
+  textarea.style.opacity="0";
+
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0,textarea.value.length);
+
+  let copied=false;
+
+  try{
+    copied=document.execCommand("copy");
+  }catch(error){
+    copied=false;
+  }
+
+  textarea.remove();
+  return copied;
 }
 
 function coopUpdateBadge(){
@@ -1194,8 +1476,15 @@ function coopUpdateBadge(){
 }
 
 function coopRenderPlayers(){
-  coopHostPlayer.classList.toggle("connected",Boolean(coop.hostUsername));
-  coopGuestPlayer.classList.toggle("connected",Boolean(coop.guestUsername));
+  coopHostPlayer.classList.toggle(
+    "connected",
+    Boolean(coop.hostUsername)
+  );
+
+  coopGuestPlayer.classList.toggle(
+    "connected",
+    Boolean(coop.guestUsername)
+  );
 
   coopHostPlayer.querySelector("span").textContent=
     coop.hostUsername||"Waiting...";
@@ -1213,13 +1502,16 @@ function coopRenderPlayers(){
     coopMapSelect.disabled=true;
     coopDifficultySelect.disabled=true;
     coopStartButton.style.display="none";
-    coopCodeBox.querySelector("div");
   }else{
     coopMapSelect.disabled=false;
     coopDifficultySelect.disabled=false;
     coopStartButton.style.display="inline-flex";
   }
 }
+
+/* -------------------------------------------------------
+   ROOM DISPLAY
+------------------------------------------------------- */
 
 function coopOpen(){
   lobby.classList.remove("visible");
@@ -1230,15 +1522,20 @@ function coopOpen(){
   coopLoginCard.classList.remove("hidden");
   coopRoomCard.classList.add("hidden");
 
-  coopUsername.value=localStorage.getItem("zombieDefenseCoopUsername")||"";
+  coopUsername.value=coopReadStoredUsername();
   coopJoinCode.value="";
-  coopUsername.focus();
+
+  window.setTimeout(()=>{
+    coopUsername.focus();
+  },50);
 }
 
 function coopShowRoom(){
   coopLoginCard.classList.add("hidden");
   coopRoomCard.classList.remove("hidden");
+
   coopRoomCode.textContent=coop.roomCode;
+
   coopRoomTitle.textContent=
     coop.role==="host"
       ?"Co-Op Waiting Room"
@@ -1247,12 +1544,43 @@ function coopShowRoom(){
   coopRenderPlayers();
 }
 
-function coopDestroyPeer(){
-  if(coop.connection){
+/* -------------------------------------------------------
+   CONNECTION MANAGEMENT
+------------------------------------------------------- */
+
+function coopStopHeartbeat(){
+  coopClearTimer("heartbeatTimer");
+}
+
+function coopStartHeartbeat(){
+  coopStopHeartbeat();
+  coop.lastPong=Date.now();
+
+  coop.heartbeatTimer=setInterval(()=>{
+    if(!coop.active||!coopConnectionOpen())return;
+
+    coopSend({
+      type:"ping",
+      time:Date.now()
+    });
+  },COOP_HEARTBEAT_INTERVAL);
+}
+
+function coopDestroyConnection(){
+  const connection=coop.connection;
+  coop.connection=null;
+
+  if(connection){
     try{
-      coop.connection.close();
+      connection.close();
     }catch(error){}
   }
+}
+
+function coopDestroyPeer(){
+  coop.closing=true;
+  coopClearConnectionTimers();
+  coopDestroyConnection();
 
   if(coop.peer){
     try{
@@ -1260,11 +1588,17 @@ function coopDestroyPeer(){
     }catch(error){}
   }
 
-  coop.connection=null;
   coop.peer=null;
+
+  window.setTimeout(()=>{
+    coop.closing=false;
+  },0);
 }
 
 function coopLeaveRoom(showLobby=true){
+  coop.allowReconnect=false;
+  coop.closing=true;
+
   if(coopConnectionOpen()){
     coopSend({
       type:"leave",
@@ -1281,6 +1615,7 @@ function coopLeaveRoom(showLobby=true){
   coop.hostUsername="";
   coop.guestUsername="";
   coop.applying=false;
+  coop.reconnectAttempts=0;
 
   coopOverlay.classList.remove("visible");
   coopLoginCard.classList.remove("hidden");
@@ -1290,62 +1625,283 @@ function coopLeaveRoom(showLobby=true){
   if(showLobby){
     originalReturnToLobby("Left the co-op room.");
   }
+
+  window.setTimeout(()=>{
+    coop.closing=false;
+  },0);
 }
 
-function coopHandleDisconnect(){
-  if(!coop.active)return;
+function coopReconnectPeerSignal(){
+  if(
+    !coop.active||
+    !coop.peer||
+    coop.peer.destroyed||
+    !coop.peer.disconnected
+  ){
+    return;
+  }
+
+  try{
+    coop.peer.reconnect();
+  }catch(error){
+    console.error("Peer signaling reconnect failed:",error);
+  }
+}
+
+function coopScheduleGuestReconnect(){
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    coop.closing||
+    !coop.allowReconnect||
+    coopConnectionOpen()||
+    coop.reconnectTimer
+  ){
+    return;
+  }
+
+  if(coop.reconnectAttempts>=COOP_MAX_RECONNECT_ATTEMPTS){
+    coopSetStatus(
+      "Could not reconnect to the host. Leave the room and check the code."
+    );
+    return;
+  }
+
+  coop.reconnectAttempts++;
+
+  coopSetStatus(
+    "Connection lost. Reconnecting "+
+    coop.reconnectAttempts+
+    " of "+
+    COOP_MAX_RECONNECT_ATTEMPTS+
+    "..."
+  );
+
+  coop.reconnectTimer=setTimeout(()=>{
+    coop.reconnectTimer=null;
+
+    if(
+      !coop.active||
+      coop.role!=="guest"||
+      coopConnectionOpen()
+    ){
+      return;
+    }
+
+    if(coop.peer&&coop.peer.disconnected){
+      coopReconnectPeerSignal();
+    }
+
+    coopConnectGuest();
+  },COOP_RECONNECT_DELAY);
+}
+
+function coopHandleDisconnect(connection){
+  if(
+    connection&&
+    coop.connection&&
+    connection!==coop.connection
+  ){
+    return;
+  }
+
+  if(coop.connection===connection){
+    coop.connection=null;
+  }
+
+  coopStopHeartbeat();
+
+  if(!coop.active||coop.closing)return;
 
   if(coop.role==="host"){
     coop.guestUsername="";
-    coop.connection=null;
-    coopSetStatus("Player 2 disconnected. Waiting for another player...");
+    coopSetStatus(
+      "Player 2 disconnected. Waiting for them to reconnect..."
+    );
+
     coopRenderPlayers();
 
     if(gameActive){
       paused=true;
-      setMessage("Player 2 disconnected. The co-op game is paused.");
+      setMessage(
+        "Player 2 disconnected. The co-op game is paused."
+      );
     }
   }else{
-    coop.connection=null;
     paused=true;
-    coopSetStatus("Disconnected from the host.");
 
     if(gameActive){
-      setMessage("Disconnected from the host. The game is paused.");
+      setMessage(
+        "Disconnected from the host. Trying to reconnect..."
+      );
     }
+
+    coopScheduleGuestReconnect();
   }
 }
 
 function coopWireConnection(connection){
+  if(!connection)return;
+
+  const oldConnection=coop.connection;
+
+  if(oldConnection&&oldConnection!==connection){
+    try{
+      oldConnection.close();
+    }catch(error){}
+  }
+
   coop.connection=connection;
 
   connection.on("open",()=>{
+    if(coop.connection!==connection)return;
+
+    coopClearTimer("joinTimer");
+    coopClearTimer("reconnectTimer");
+    coop.reconnectAttempts=0;
+    coop.allowReconnect=true;
+
+    coopStartHeartbeat();
+
     if(coop.role==="guest"){
       coopSend({
         type:"join",
-        username:coop.username
+        username:coop.username,
+        reconnecting:coop.started
       });
 
-      coopSetStatus("Connected. Waiting for the host to start.");
+      coopSetStatus(
+        coop.started
+          ?"Reconnected. Synchronizing the game..."
+          :"Connected. Waiting for the host to start."
+      );
     }else{
-      coopSetStatus("Player connected. Waiting for their username...");
+      coopSetStatus(
+        "Player connected. Waiting for their username..."
+      );
     }
 
     coopRenderPlayers();
   });
 
   connection.on("data",data=>{
+    if(coop.connection!==connection)return;
     coopReceive(data);
   });
 
   connection.on("close",()=>{
-    coopHandleDisconnect();
+    coopHandleDisconnect(connection);
   });
 
   connection.on("error",error=>{
     console.error("Co-op connection error:",error);
-    coopSetStatus("Connection error. Try leaving and joining again.");
+
+    if(coop.connection!==connection)return;
+
+    coopSetStatus(
+      "Connection error. Trying to reconnect..."
+    );
+
+    if(coop.role==="guest"){
+      coopScheduleGuestReconnect();
+    }
   });
+}
+
+function coopAttachCommonPeerEvents(peer){
+  peer.on("disconnected",()=>{
+    if(
+      !coop.active||
+      coop.closing||
+      peer!==coop.peer
+    ){
+      return;
+    }
+
+    coopSetStatus("Network changed. Reconnecting...");
+
+    window.setTimeout(()=>{
+      if(
+        coop.active&&
+        peer===coop.peer&&
+        peer.disconnected&&
+        !peer.destroyed
+      ){
+        coopReconnectPeerSignal();
+      }
+    },500);
+  });
+
+  peer.on("close",()=>{
+    if(
+      !coop.active||
+      coop.closing||
+      peer!==coop.peer
+    ){
+      return;
+    }
+
+    coopSetStatus(
+      "The multiplayer connection closed. Leave and try again."
+    );
+  });
+}
+
+function coopConnectGuest(){
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.peer||
+    coop.peer.destroyed||
+    coopConnectionOpen()
+  ){
+    return;
+  }
+
+  if(!coop.peer.open){
+    coopSetStatus("Connecting to the multiplayer service...");
+    return;
+  }
+
+  coopClearTimer("joinTimer");
+
+  const connection=coop.peer.connect(
+    coopPeerId(coop.roomCode),
+    {
+      reliable:true,
+      serialization:"json",
+      metadata:{
+        username:coop.username,
+        game:"zombie-defense-v6"
+      }
+    }
+  );
+
+  coopWireConnection(connection);
+
+  coop.joinTimer=setTimeout(()=>{
+    coop.joinTimer=null;
+
+    if(
+      !coop.active||
+      coop.role!=="guest"||
+      coopConnectionOpen()
+    ){
+      return;
+    }
+
+    try{
+      connection.close();
+    }catch(error){}
+
+    coopSetStatus(
+      "Could not find that room. Check the code and make sure the host is waiting."
+    );
+
+    if(coop.started){
+      coopScheduleGuestReconnect();
+    }
+  },COOP_CONNECT_TIMEOUT);
 }
 
 /* -------------------------------------------------------
@@ -1362,7 +1918,9 @@ function coopCreateRoom(){
   }
 
   if(typeof Peer==="undefined"){
-    alert("The multiplayer service did not load. Refresh and try again.");
+    alert(
+      "The multiplayer service did not load. Refresh and try again."
+    );
     return;
   }
 
@@ -1375,29 +1933,51 @@ function coopCreateRoom(){
   coop.role="host";
   coop.active=true;
   coop.started=false;
+  coop.allowReconnect=true;
+  coop.reconnectAttempts=0;
 
-  localStorage.setItem("zombieDefenseCoopUsername",username);
+  coopStoreUsername(username);
 
   coopShowRoom();
   coopSetStatus("Creating room...");
 
-  coop.peer=new Peer(coopPeerId(coop.roomCode),{
-    debug:0
-  });
+  const peer=coopCreatePeer(coopPeerId(coop.roomCode));
+  coop.peer=peer;
 
-  coop.peer.on("open",()=>{
-    coopSetStatus("Room created. Give the code to Player 2.");
+  coopAttachCommonPeerEvents(peer);
+
+  peer.on("open",()=>{
+    if(peer!==coop.peer||!coop.active)return;
+
+    coopSetStatus(
+      "Room created. Give the code to Player 2."
+    );
+
     coopRenderPlayers();
   });
 
-  coop.peer.on("connection",connection=>{
+  peer.on("connection",connection=>{
+    if(peer!==coop.peer||!coop.active){
+      try{
+        connection.close();
+      }catch(error){}
+
+      return;
+    }
+
     if(coopConnectionOpen()){
       connection.on("open",()=>{
-        connection.send({
-          type:"roomFull"
-        });
+        try{
+          connection.send({
+            type:"roomFull"
+          });
+        }catch(error){}
 
-        connection.close();
+        window.setTimeout(()=>{
+          try{
+            connection.close();
+          }catch(error){}
+        },250);
       });
 
       return;
@@ -1406,13 +1986,27 @@ function coopCreateRoom(){
     coopWireConnection(connection);
   });
 
-  coop.peer.on("error",error=>{
+  peer.on("error",error=>{
+    if(peer!==coop.peer||coop.closing)return;
+
     console.error("Co-op host error:",error);
 
     if(error.type==="unavailable-id"){
-      coopSetStatus("That room code was taken. Create another room.");
+      coopSetStatus(
+        "That room code was already taken. Press Leave Room and create another."
+      );
+    }else if(error.type==="network"){
+      coopSetStatus(
+        "Network error while creating the room. Check your connection."
+      );
+    }else if(error.type==="server-error"){
+      coopSetStatus(
+        "The multiplayer server is unavailable. Try again shortly."
+      );
     }else{
-      coopSetStatus("Could not create the room. Check your connection.");
+      coopSetStatus(
+        "Could not create the room. Check your connection and try again."
+      );
     }
   });
 }
@@ -1434,7 +2028,9 @@ function coopJoinRoom(){
   }
 
   if(typeof Peer==="undefined"){
-    alert("The multiplayer service did not load. Refresh and try again.");
+    alert(
+      "The multiplayer service did not load. Refresh and try again."
+    );
     return;
   }
 
@@ -1447,40 +2043,46 @@ function coopJoinRoom(){
   coop.role="guest";
   coop.active=true;
   coop.started=false;
+  coop.allowReconnect=true;
+  coop.reconnectAttempts=0;
 
-  localStorage.setItem("zombieDefenseCoopUsername",username);
+  coopStoreUsername(username);
 
   coopShowRoom();
   coopSetStatus("Connecting to room "+code+"...");
 
-  coop.peer=new Peer(undefined,{
-    debug:0
+  const peer=coopCreatePeer();
+  coop.peer=peer;
+
+  coopAttachCommonPeerEvents(peer);
+
+  peer.on("open",()=>{
+    if(peer!==coop.peer||!coop.active)return;
+    coopConnectGuest();
   });
 
-  coop.peer.on("open",()=>{
-    const connection=coop.peer.connect(coopPeerId(code),{
-      reliable:true,
-      serialization:"json"
-    });
+  peer.on("error",error=>{
+    if(peer!==coop.peer||coop.closing)return;
 
-    coopWireConnection(connection);
-
-    setTimeout(()=>{
-      if(
-        coop.active&&
-        coop.role==="guest"&&
-        !coopConnectionOpen()
-      ){
-        coopSetStatus(
-          "Could not find that room. Check the code and make sure the host is waiting."
-        );
-      }
-    },8000);
-  });
-
-  coop.peer.on("error",error=>{
     console.error("Co-op guest error:",error);
-    coopSetStatus("Could not join that room. Check the code.");
+
+    if(error.type==="peer-unavailable"){
+      coopSetStatus(
+        "Could not find that room. Check the code and make sure the host is waiting."
+      );
+    }else if(error.type==="network"){
+      coopSetStatus(
+        "Network error. Check your internet connection."
+      );
+    }else if(error.type==="server-error"){
+      coopSetStatus(
+        "The multiplayer server is unavailable. Try again shortly."
+      );
+    }else{
+      coopSetStatus(
+        "Could not join that room. Check the code and try again."
+      );
+    }
   });
 }
 
@@ -1506,22 +2108,36 @@ function coopStartGame(){
     !coopConnectionOpen()||
     !coop.guestUsername
   ){
+    coopSetStatus(
+      "Wait for Player 2 to connect before starting."
+    );
     return;
   }
 
   const mapIndex=Number(coopMapSelect.value);
   const difficulty=coopDifficultySelect.value;
 
-  if(mapIndex<0||mapIndex>=account.unlockedMapCount){
+  if(
+    !Number.isInteger(mapIndex)||
+    mapIndex<0||
+    mapIndex>=account.unlockedMapCount||
+    !maps[mapIndex]
+  ){
     coopSetStatus("That map is not unlocked.");
+    return;
+  }
+
+  if(!difficulties[difficulty]){
+    coopSetStatus("Choose a valid difficulty.");
     return;
   }
 
   coop.started=true;
   coop.applying=true;
-  originalStartMap(mapIndex,difficulty);
-  coop.applying=false;
 
+  originalStartMap(mapIndex,difficulty);
+
+  coop.applying=false;
   coopOverlay.classList.remove("visible");
 
   coopSend({
@@ -1532,6 +2148,7 @@ function coopStartGame(){
 
   coopUpdateBadge();
   coopSendSnapshot(true);
+
   setMessage(
     "Co-op started with "+coop.guestUsername+
     ". Both players can place and upgrade towers."
@@ -1580,7 +2197,10 @@ function coopCreateSnapshot(){
     runUsedFarm,
     runOnlyHumans,
     runPlacedTower,
-    selectedTowerId:selectedTower?selectedTower._coopId:null,
+    selectedTowerId:
+      selectedTower&&selectedTower._coopId
+        ?selectedTower._coopId
+        :null,
     messageText:message.textContent,
     result:{
       visible:resultOverlay.classList.contains("visible"),
@@ -1610,12 +2230,25 @@ function coopSendSnapshot(force=false){
     return;
   }
 
-  const now=performance.now();
+  const now=
+    typeof performance!=="undefined"&&performance.now
+      ?performance.now()
+      :Date.now();
 
-  if(!force&&now-coop.lastSnapshot<100)return;
+  if(
+    !force&&
+    now-coop.lastSnapshot<COOP_SNAPSHOT_INTERVAL
+  ){
+    return;
+  }
 
   coop.lastSnapshot=now;
-  coopSend(coopCreateSnapshot());
+
+  try{
+    coopSend(coopCreateSnapshot());
+  }catch(error){
+    console.error("Could not create co-op snapshot:",error);
+  }
 }
 
 function coopApplySnapshot(state){
@@ -1623,43 +2256,92 @@ function coopApplySnapshot(state){
     !coop.active||
     coop.role!=="guest"||
     !state||
-    state.mapIndex<0||
-    !maps[state.mapIndex]
+    !Number.isInteger(Number(state.mapIndex))||
+    Number(state.mapIndex)<0||
+    !maps[Number(state.mapIndex)]
   ){
     return;
   }
 
+  const mapIndex=Number(state.mapIndex);
+
   coop.applying=true;
   coop.started=true;
 
-  currentMap=maps[state.mapIndex];
+  currentMap=maps[mapIndex];
+
   currentDifficulty=difficulties[state.currentDifficulty]
     ?state.currentDifficulty
     :"medium";
 
-  money=Number(state.money)||0;
-  health=Math.max(0,Number(state.health)||0);
-  wave=Math.max(1,Number(state.wave)||1);
+  money=Number.isFinite(Number(state.money))
+    ?Number(state.money)
+    :0;
 
-  towers=Array.isArray(state.towers)?state.towers:[];
-  enemies=Array.isArray(state.enemies)?state.enemies:[];
-  effects=Array.isArray(state.effects)?state.effects:[];
+  health=Math.max(
+    0,
+    Number.isFinite(Number(state.health))
+      ?Number(state.health)
+      :0
+  );
+
+  wave=Math.max(
+    1,
+    Number.isFinite(Number(state.wave))
+      ?Number(state.wave)
+      :1
+  );
+
+  towers=Array.isArray(state.towers)
+    ?state.towers
+    :[];
+
+  enemies=Array.isArray(state.enemies)
+    ?state.enemies
+    :[];
+
+  effects=Array.isArray(state.effects)
+    ?state.effects
+    :[];
 
   waveRunning=Boolean(state.waveRunning);
   gameActive=Boolean(state.gameActive);
   paused=Boolean(state.paused);
   autoStart=Boolean(state.autoStart);
-  speedMultiplier=Number(state.speedMultiplier)||1;
-  gameTime=Number(state.gameTime)||0;
-  bossStartHealth=Number(state.bossStartHealth)||MAX_HEALTH;
-  overdriveUntil=Number(state.overdriveUntil)||0;
-  abilityReady=state.abilityReady||{};
+
+  speedMultiplier=
+    Number.isFinite(Number(state.speedMultiplier))&&
+    Number(state.speedMultiplier)>0
+      ?Number(state.speedMultiplier)
+      :1;
+
+  gameTime=Number.isFinite(Number(state.gameTime))
+    ?Number(state.gameTime)
+    :0;
+
+  bossStartHealth=
+    Number.isFinite(Number(state.bossStartHealth))
+      ?Number(state.bossStartHealth)
+      :MAX_HEALTH;
+
+  overdriveUntil=
+    Number.isFinite(Number(state.overdriveUntil))
+      ?Number(state.overdriveUntil)
+      :0;
+
+  abilityReady=
+    state.abilityReady&&typeof state.abilityReady==="object"
+      ?state.abilityReady
+      :{};
+
   runUsedFarm=Boolean(state.runUsedFarm);
   runOnlyHumans=Boolean(state.runOnlyHumans);
   runPlacedTower=Boolean(state.runPlacedTower);
 
   selectedTower=state.selectedTowerId
-    ?towers.find(tower=>tower._coopId===state.selectedTowerId)||null
+    ?towers.find(
+      tower=>tower._coopId===state.selectedTowerId
+    )||null
     :null;
 
   lobby.classList.remove("visible");
@@ -1668,14 +2350,20 @@ function coopApplySnapshot(state){
   controlBar.classList.remove("hidden");
   abilityBar.classList.remove("hidden");
 
-  if(state.messageText){
+  if(typeof state.messageText==="string"){
     message.textContent=state.messageText;
   }
 
   if(state.result&&state.result.visible){
-    resultTitle.textContent=state.result.title||"Round Complete";
-    resultText.textContent=state.result.text||"";
-    continueButton.style.display=state.result.continueDisplay||"inline-flex";
+    resultTitle.textContent=
+      state.result.title||"Round Complete";
+
+    resultText.textContent=
+      state.result.text||"";
+
+    continueButton.style.display=
+      state.result.continueDisplay||"inline-flex";
+
     resultOverlay.classList.add("visible");
   }else{
     resultOverlay.classList.remove("visible");
@@ -1718,6 +2406,9 @@ function coopSendCommand(action,payload={}){
     !coop.started||
     !coopConnectionOpen()
   ){
+    setMessage(
+      "The command could not be sent because the host is disconnected."
+    );
     return;
   }
 
@@ -1729,99 +2420,129 @@ function coopSendCommand(action,payload={}){
 }
 
 function coopFindHostTower(id){
-  return towers.find(tower=>tower._coopId===id)||null;
+  return towers.find(
+    tower=>tower._coopId===id
+  )||null;
 }
 
 function coopRunHostCommand(action,payload={}){
-  if(coop.role!=="host"||!coop.started)return;
+  if(
+    coop.role!=="host"||
+    !coop.started||
+    !action
+  ){
+    return;
+  }
 
   coop.applying=true;
 
-  if(action==="placeTower"){
-    const type=payload.type;
-    const x=Number(payload.x);
-    const y=Number(payload.y);
+  try{
+    if(action==="placeTower"){
+      const type=payload.type;
+      const x=Number(payload.x);
+      const y=Number(payload.y);
 
-    if(
-      towerTypes[type]&&
-      Number.isFinite(x)&&
-      Number.isFinite(y)&&
-      validPlacement(x,y)
-    ){
-      originalPlaceTower(type,x,y);
-      coopEnsureTowerIds();
+      if(
+        towerTypes[type]&&
+        Number.isFinite(x)&&
+        Number.isFinite(y)&&
+        validPlacement(x,y)
+      ){
+        originalPlaceTower(type,x,y);
+        coopEnsureTowerIds();
+      }
     }
-  }
 
-  if(action==="startWave"){
-    originalStartWave();
-  }
-
-  if(action==="target"){
-    const tower=coopFindHostTower(payload.towerId);
-
-    if(tower){
-      const index=targetingModes.indexOf(tower.targeting);
-      tower.targeting=
-        targetingModes[(index+1)%targetingModes.length];
-
-      selectedTower=tower;
-      showTowerPanel(tower);
+    if(action==="startWave"){
+      originalStartWave();
     }
-  }
 
-  if(action==="upgradeDamage"){
-    const tower=coopFindHostTower(payload.towerId);
+    if(action==="target"){
+      const tower=coopFindHostTower(payload.towerId);
 
-    if(tower){
-      selectedTower=tower;
-      originalUpgradeDamage();
+      if(tower){
+        const index=targetingModes.indexOf(tower.targeting);
+
+        tower.targeting=
+          targetingModes[
+            (Math.max(index,0)+1)%targetingModes.length
+          ];
+
+        selectedTower=tower;
+        showTowerPanel(tower);
+      }
     }
-  }
 
-  if(action==="upgradeRange"){
-    const tower=coopFindHostTower(payload.towerId);
+    if(action==="upgradeDamage"){
+      const tower=coopFindHostTower(payload.towerId);
 
-    if(tower){
-      selectedTower=tower;
-      originalUpgradeRange();
+      if(tower){
+        selectedTower=tower;
+        originalUpgradeDamage();
+      }
     }
-  }
 
-  if(action==="upgradeSpeed"){
-    const tower=coopFindHostTower(payload.towerId);
+    if(action==="upgradeRange"){
+      const tower=coopFindHostTower(payload.towerId);
 
-    if(tower){
-      selectedTower=tower;
-      originalUpgradeSpeed();
+      if(tower){
+        selectedTower=tower;
+        originalUpgradeRange();
+      }
     }
-  }
 
-  if(action==="evolve"){
-    const tower=coopFindHostTower(payload.towerId);
+    if(action==="upgradeSpeed"){
+      const tower=coopFindHostTower(payload.towerId);
 
-    if(tower){
-      selectedTower=tower;
-      originalEvolveTower(tower,Number(payload.index));
+      if(tower){
+        selectedTower=tower;
+        originalUpgradeSpeed();
+      }
     }
-  }
 
-  if(action==="sell"){
-    const tower=coopFindHostTower(payload.towerId);
+    if(action==="evolve"){
+      const tower=coopFindHostTower(payload.towerId);
+      const evolutionIndex=Number(payload.index);
 
-    if(tower){
-      const refund=Math.floor(tower.spent*.65);
-      money+=refund;
-      towers=towers.filter(item=>item!==tower);
-      selectedTower=null;
-      towerPanel.style.display="none";
-      setMessage(coop.guestUsername+" sold a tower for $"+refund+".");
-      updateUI();
+      if(
+        tower&&
+        Number.isInteger(evolutionIndex)&&
+        evolutionIndex>=0
+      ){
+        selectedTower=tower;
+        originalEvolveTower(tower,evolutionIndex);
+      }
     }
-  }
 
-  if(action==="ability"){
-    originalActivateAbility(payload.id);
+    if(action==="sell"){
+      const tower=coopFindHostTower(payload.towerId);
+
+      if(tower){
+        const refund=Math.floor(
+          (Number(tower.spent)||0)*0.65
+        );
+
+        money+=refund;
+        towers=towers.filter(item=>item!==tower);
+        selectedTower=null;
+        towerPanel.style.display="none";
+
+        setMessage(
+          coop.guestUsername+
+          " sold a tower for $"+
+          refund+
+          "."
+        );
+
+        updateUI();
+      }
+    }
+
+    if(action==="ability"&&payload.id){
+      originalActivateAbility(payload.id);
+    }
+  }catch(error){
+    console.error("Co-op command failed:",action,error);
   }
 
   coop.applying=false;
@@ -1835,8 +2556,32 @@ function coopRunHostCommand(action,payload={}){
 function coopReceive(data){
   if(!data||typeof data!=="object")return;
 
+  if(data.type==="ping"){
+    coopSend({
+      type:"pong",
+      time:data.time
+    });
+
+    return;
+  }
+
+  if(data.type==="pong"){
+    coop.lastPong=Date.now();
+    return;
+  }
+
   if(data.type==="roomFull"){
+    coop.allowReconnect=false;
     coopSetStatus("That room already has two players.");
+
+    coopClearTimer("joinTimer");
+
+    if(coop.connection){
+      try{
+        coop.connection.close();
+      }catch(error){}
+    }
+
     return;
   }
 
@@ -1845,24 +2590,46 @@ function coopReceive(data){
       coopSafeUsername(data.username)||"Player 2";
 
     coopSetStatus(
-      coop.guestUsername+
-      " joined. Choose the map and difficulty, then press Start."
+      data.reconnecting&&coop.started
+        ?coop.guestUsername+
+          " reconnected. Synchronizing the game..."
+        :coop.guestUsername+
+          " joined. Choose the map and difficulty, then press Start."
     );
 
     coopRenderPlayers();
     coopSendRoomSettings();
+
+    if(data.reconnecting&&coop.started){
+      paused=false;
+      coopSendSnapshot(true);
+
+      setMessage(
+        coop.guestUsername+
+        " reconnected to the co-op game."
+      );
+    }
+
     return;
   }
 
-  if(data.type==="roomSettings"&&coop.role==="guest"){
+  if(
+    data.type==="roomSettings"&&
+    coop.role==="guest"
+  ){
     coop.hostUsername=
       coopSafeUsername(data.hostUsername)||"Host";
 
     coop.guestUsername=
       coopSafeUsername(data.guestUsername)||coop.username;
 
-    if(maps[data.mapIndex]){
-      coopMapSelect.value=String(data.mapIndex);
+    const mapIndex=Number(data.mapIndex);
+
+    if(
+      Number.isInteger(mapIndex)&&
+      maps[mapIndex]
+    ){
+      coopMapSelect.value=String(mapIndex);
     }
 
     if(difficulties[data.difficulty]){
@@ -1878,14 +2645,29 @@ function coopReceive(data){
     return;
   }
 
-  if(data.type==="startGame"&&coop.role==="guest"){
-    if(!maps[data.mapIndex])return;
+  if(
+    data.type==="startGame"&&
+    coop.role==="guest"
+  ){
+    const mapIndex=Number(data.mapIndex);
+
+    if(
+      !Number.isInteger(mapIndex)||
+      !maps[mapIndex]||
+      !difficulties[data.difficulty]
+    ){
+      return;
+    }
 
     coop.started=true;
     coop.applying=true;
-    originalStartMap(data.mapIndex,data.difficulty);
-    coop.applying=false;
 
+    originalStartMap(
+      mapIndex,
+      data.difficulty
+    );
+
+    coop.applying=false;
     coopOverlay.classList.remove("visible");
     coopUpdateBadge();
 
@@ -1897,13 +2679,23 @@ function coopReceive(data){
     return;
   }
 
-  if(data.type==="snapshot"&&coop.role==="guest"){
+  if(
+    data.type==="snapshot"&&
+    coop.role==="guest"
+  ){
     coopApplySnapshot(data);
     return;
   }
 
-  if(data.type==="command"&&coop.role==="host"){
-    coopRunHostCommand(data.action,data.payload||{});
+  if(
+    data.type==="command"&&
+    coop.role==="host"
+  ){
+    coopRunHostCommand(
+      data.action,
+      data.payload||{}
+    );
+
     return;
   }
 
@@ -1916,12 +2708,14 @@ function coopReceive(data){
     towers=[];
     enemies=[];
     effects=[];
+    selectedTower=null;
 
     towerBar.classList.add("hidden");
     controlBar.classList.add("hidden");
     abilityBar.classList.add("hidden");
     resultOverlay.classList.remove("visible");
     bossPanel.style.display="none";
+    towerPanel.style.display="none";
 
     coopOverlay.classList.add("visible");
     coopLoginCard.classList.add("hidden");
@@ -1940,7 +2734,7 @@ function coopReceive(data){
   }
 
   if(data.type==="leave"){
-    coopHandleDisconnect();
+    coopHandleDisconnect(coop.connection);
   }
 }
 
@@ -1955,13 +2749,19 @@ placeTower=function(type,x,y){
     coop.started&&
     !coop.applying
   ){
-    coopSendCommand("placeTower",{type,x,y});
+    coopSendCommand("placeTower",{
+      type,
+      x:Number(x),
+      y:Number(y)
+    });
+
     placementType=null;
     setMessage("Tower placement sent to the host.");
     return;
   }
 
   const previousCount=towers.length;
+
   originalPlaceTower(type,x,y);
 
   if(
@@ -1974,7 +2774,9 @@ placeTower=function(type,x,y){
   }
 };
 
-returnToLobby=function(text="Choose a map and difficulty."){
+returnToLobby=function(
+  text="Choose a map and difficulty."
+){
   originalReturnToLobby(text);
 
   if(
@@ -2047,7 +2849,7 @@ controlBar.addEventListener("click",event=>{
     return;
   }
 
-  const button=event.target.closest("button");
+  const button=coopClosestButton(event.target);
   if(!button)return;
 
   if(button.id==="startWaveButton"){
@@ -2077,7 +2879,9 @@ controlBar.addEventListener("click",event=>{
   if(button.id==="lobbyButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can return everyone to the lobby.");
+    setMessage(
+      "Only the host can return everyone to the lobby."
+    );
   }
 },true);
 
@@ -2090,40 +2894,64 @@ towerPanel.addEventListener("click",event=>{
     return;
   }
 
-  const button=event.target.closest("button");
-  if(!button||button.id==="closeTowerButton")return;
+  const button=coopClosestButton(event.target);
 
-  const towerId=selectedTower&&selectedTower._coopId;
+  if(
+    !button||
+    button.id==="closeTowerButton"
+  ){
+    return;
+  }
+
+  const towerId=
+    selectedTower&&selectedTower._coopId;
+
   if(!towerId)return;
 
   if(button.id==="targetButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    coopSendCommand("target",{towerId});
+
+    coopSendCommand("target",{
+      towerId
+    });
   }
 
   if(button.id==="damageButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    coopSendCommand("upgradeDamage",{towerId});
+
+    coopSendCommand("upgradeDamage",{
+      towerId
+    });
   }
 
   if(button.id==="rangeButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    coopSendCommand("upgradeRange",{towerId});
+
+    coopSendCommand("upgradeRange",{
+      towerId
+    });
   }
 
   if(button.id==="speedButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    coopSendCommand("upgradeSpeed",{towerId});
+
+    coopSendCommand("upgradeSpeed",{
+      towerId
+    });
   }
 
   if(button.id==="sellButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    coopSendCommand("sell",{towerId});
+
+    coopSendCommand("sell",{
+      towerId
+    });
+
     towerPanel.style.display="none";
     selectedTower=null;
   }
@@ -2148,7 +2976,16 @@ abilityBar.addEventListener("click",event=>{
     return;
   }
 
-  const button=event.target.closest("button[data-ability]");
+  const target=
+    event.target&&event.target.nodeType===Node.TEXT_NODE
+      ?event.target.parentElement
+      :event.target;
+
+  const button=
+    target&&typeof target.closest==="function"
+      ?target.closest("button[data-ability]")
+      :null;
+
   if(!button)return;
 
   event.preventDefault();
@@ -2164,7 +3001,10 @@ document.addEventListener("keydown",event=>{
     coop.active&&
     coop.role==="guest"&&
     coop.started&&
-    event.key===" "
+    (
+      event.key===" "||
+      event.code==="Space"
+    )
   ){
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -2177,10 +3017,25 @@ document.addEventListener("keydown",event=>{
 ------------------------------------------------------- */
 
 coopButton.addEventListener("click",coopOpen);
-coopCreateButton.addEventListener("click",coopCreateRoom);
-coopJoinButton.addEventListener("click",coopJoinRoom);
+
+coopCreateButton.addEventListener(
+  "click",
+  coopCreateRoom
+);
+
+coopJoinButton.addEventListener(
+  "click",
+  coopJoinRoom
+);
 
 coopLoginBackButton.addEventListener("click",()=>{
+  coopDestroyPeer();
+
+  coop.active=false;
+  coop.role=null;
+  coop.started=false;
+  coop.allowReconnect=false;
+
   coopOverlay.classList.remove("visible");
   lobby.classList.add("visible");
 });
@@ -2190,12 +3045,14 @@ coopLeaveButton.addEventListener("click",()=>{
 });
 
 coopCopyCodeButton.addEventListener("click",async()=>{
-  try{
-    await navigator.clipboard.writeText(coop.roomCode);
-    coopSetStatus("Room code copied: "+coop.roomCode);
-  }catch(error){
-    coopSetStatus("Room code: "+coop.roomCode);
-  }
+  const copied=await coopCopyText(coop.roomCode);
+
+  coopSetStatus(
+    copied
+      ?"Room code copied: "+coop.roomCode
+      :"Room code: "+coop.roomCode+
+       ". Press and hold the code to copy it."
+  );
 });
 
 coopMapSelect.addEventListener("change",()=>{
@@ -2204,7 +3061,11 @@ coopMapSelect.addEventListener("change",()=>{
   const map=maps[Number(coopMapSelect.value)];
 
   if(map){
-    coopDifficultySelect.value=recommendedDifficulty(map);
+    const suggestedDifficulty=recommendedDifficulty(map);
+
+    if(difficulties[suggestedDifficulty]){
+      coopDifficultySelect.value=suggestedDifficulty;
+    }
   }
 
   coopSendRoomSettings();
@@ -2216,10 +3077,103 @@ coopDifficultySelect.addEventListener("change",()=>{
   }
 });
 
-coopStartButton.addEventListener("click",coopStartGame);
+coopStartButton.addEventListener(
+  "click",
+  coopStartGame
+);
 
 coopJoinCode.addEventListener("input",()=>{
-  coopJoinCode.value=coopSafeCode(coopJoinCode.value);
+  coopJoinCode.value=
+    coopSafeCode(coopJoinCode.value);
+});
+
+coopJoinCode.addEventListener("keydown",event=>{
+  if(event.key==="Enter"){
+    event.preventDefault();
+    coopJoinRoom();
+  }
+});
+
+coopUsername.addEventListener("keydown",event=>{
+  if(event.key!=="Enter")return;
+
+  event.preventDefault();
+
+  if(coopJoinCode.value.trim()){
+    coopJoinRoom();
+  }else{
+    coopJoinCode.focus();
+  }
+});
+
+/* -------------------------------------------------------
+   DEVICE AND NETWORK EVENTS
+------------------------------------------------------- */
+
+window.addEventListener("online",()=>{
+  if(!coop.active)return;
+
+  coopSetStatus("Internet connection restored. Reconnecting...");
+
+  if(coop.peer&&coop.peer.disconnected){
+    coopReconnectPeerSignal();
+  }
+
+  if(coop.role==="guest"&&!coopConnectionOpen()){
+    coopScheduleGuestReconnect();
+  }
+});
+
+window.addEventListener("offline",()=>{
+  if(!coop.active)return;
+
+  coopSetStatus(
+    "Internet connection lost. Waiting for the connection to return..."
+  );
+
+  if(gameActive){
+    paused=true;
+    setMessage("Internet connection lost. Game paused.");
+  }
+});
+
+document.addEventListener("visibilitychange",()=>{
+  if(
+    document.visibilityState!=="visible"||
+    !coop.active
+  ){
+    return;
+  }
+
+  if(coop.peer&&coop.peer.disconnected){
+    coopReconnectPeerSignal();
+  }
+
+  if(
+    coop.role==="guest"&&
+    !coopConnectionOpen()
+  ){
+    coopScheduleGuestReconnect();
+  }
+
+  if(
+    coop.role==="host"&&
+    coop.started&&
+    coopConnectionOpen()
+  ){
+    coopSendSnapshot(true);
+  }
+});
+
+window.addEventListener("pagehide",()=>{
+  if(coopConnectionOpen()){
+    coopSend({
+      type:"leave",
+      username:coop.username
+    });
+  }
+
+  coopDestroyPeer();
 });
 
 window.addEventListener("beforeunload",()=>{
@@ -2232,5 +3186,9 @@ window.addEventListener("beforeunload",()=>{
 
   coopDestroyPeer();
 });
+
+}
 </script>
-<!-- END MULTI-DEVICE CO-OP ADD-ON --> </body> </html>
+<!-- END MULTI-DEVICE CO-OP ADD-ON -->
+</body>
+</html>
