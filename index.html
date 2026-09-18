@@ -1103,8 +1103,9 @@ coopOverlay.innerHTML=`
   <h1>Zombie Defense Co-Op</h1>
 
   <p class="overlayIntro">
-    Create a room or enter a friend's code. The host chooses the map,
-    difficulty, and when the game starts.
+    Create a room or enter a friend's code. The host chooses the map
+    and starts the game. Both players can choose the difficulty and
+    use all controls during the game.
   </p>
 
   <div class="coopCard" id="coopLoginCard">
@@ -1426,6 +1427,17 @@ function coopClosestButton(target){
     :null;
 }
 
+function coopClickHostControl(id){
+  const button=document.getElementById(id);
+
+  if(!button||button.disabled){
+    return false;
+  }
+
+  button.click();
+  return true;
+}
+
 async function coopCopyText(text){
   if(
     navigator.clipboard&&
@@ -1500,7 +1512,7 @@ function coopRenderPlayers(){
 
   if(coop.role==="guest"){
     coopMapSelect.disabled=true;
-    coopDifficultySelect.disabled=true;
+    coopDifficultySelect.disabled=false;
     coopStartButton.style.display="none";
   }else{
     coopMapSelect.disabled=false;
@@ -2102,6 +2114,30 @@ function coopSendRoomSettings(){
   });
 }
 
+function coopSendGuestDifficulty(){
+  if(
+    coop.role!=="guest"||
+    coop.started||
+    !coopConnectionOpen()||
+    !difficulties[coopDifficultySelect.value]
+  ){
+    return;
+  }
+
+  coopSend({
+    type:"changeDifficulty",
+    difficulty:coopDifficultySelect.value
+  });
+
+  coopSetStatus(
+    "Difficulty changed to "+
+    coopDifficultySelect.options[
+      coopDifficultySelect.selectedIndex
+    ].textContent+
+    ". Waiting for the host to start."
+  );
+}
+
 function coopStartGame(){
   if(
     coop.role!=="host"||
@@ -2151,7 +2187,7 @@ function coopStartGame(){
 
   setMessage(
     "Co-op started with "+coop.guestUsername+
-    ". Both players can place and upgrade towers."
+    ". Both players have full in-game controls."
   );
 }
 
@@ -2409,10 +2445,10 @@ function coopSendCommand(action,payload={}){
     setMessage(
       "The command could not be sent because the host is disconnected."
     );
-    return;
+    return false;
   }
 
-  coopSend({
+  return coopSend({
     type:"command",
     action,
     payload
@@ -2455,6 +2491,41 @@ function coopRunHostCommand(action,payload={}){
 
     if(action==="startWave"){
       originalStartWave();
+    }
+
+    if(action==="toggleAuto"){
+      coopClickHostControl("autoButton");
+    }
+
+    if(action==="changeSpeed"){
+      coopClickHostControl("gameSpeedButton");
+    }
+
+    if(action==="supplyDrop"){
+      coopClickHostControl("rewardButton");
+    }
+
+    if(action==="returnToLobby"){
+      coop.applying=false;
+
+      returnToLobby(
+        coop.guestUsername+
+        " returned both players to the co-op lobby."
+      );
+
+      return;
+    }
+
+    if(action==="continueResult"){
+      coop.applying=false;
+
+      if(coopClickHostControl("continueButton")){
+        if(coop.started){
+          coopSendSnapshot(true);
+        }
+      }
+
+      return;
     }
 
     if(action==="target"){
@@ -2594,7 +2665,7 @@ function coopReceive(data){
         ?coop.guestUsername+
           " reconnected. Synchronizing the game..."
         :coop.guestUsername+
-          " joined. Choose the map and difficulty, then press Start."
+          " joined. Choose the map, then press Start."
     );
 
     coopRenderPlayers();
@@ -2610,6 +2681,27 @@ function coopReceive(data){
       );
     }
 
+    return;
+  }
+
+  if(
+    data.type==="changeDifficulty"&&
+    coop.role==="host"&&
+    !coop.started
+  ){
+    if(!difficulties[data.difficulty]){
+      coopSendRoomSettings();
+      return;
+    }
+
+    coopDifficultySelect.value=data.difficulty;
+
+    coopSetStatus(
+      coop.guestUsername+
+      " changed the difficulty. Choose the map and press Start."
+    );
+
+    coopSendRoomSettings();
     return;
   }
 
@@ -2638,7 +2730,7 @@ function coopReceive(data){
 
     coopSetStatus(
       "Connected to "+coop.hostUsername+
-      ". Waiting for the host to start."
+      ". You can choose the difficulty. Waiting for the host to start."
     );
 
     coopRenderPlayers();
@@ -2673,7 +2765,7 @@ function coopReceive(data){
 
     setMessage(
       "Joined "+coop.hostUsername+
-      "'s co-op game. You can place and upgrade towers."
+      "'s co-op game. You have full in-game controls."
     );
 
     return;
@@ -2724,7 +2816,7 @@ function coopReceive(data){
     coopSetStatus(
       coop.role==="host"
         ?"Choose another map and start when ready."
-        :"Waiting for the host to choose another map."
+        :"Choose the difficulty or wait for the host to start."
     );
 
     coopRenderPlayers();
@@ -2799,7 +2891,7 @@ returnToLobby=function(
     coopSetStatus(
       coop.role==="host"
         ?"Choose another map and start when ready."
-        :"Waiting for the host to choose another map."
+        :"Choose the difficulty or wait for the host to start."
     );
 
     coopRenderPlayers();
@@ -2837,7 +2929,7 @@ gameLoop=function(timestamp){
 };
 
 /* -------------------------------------------------------
-   GUEST CONTROL INTERCEPTION
+   PLAYER 2 CONTROL FORWARDING
 ------------------------------------------------------- */
 
 controlBar.addEventListener("click",event=>{
@@ -2855,33 +2947,45 @@ controlBar.addEventListener("click",event=>{
   if(button.id==="startWaveButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can start waves.");
+
+    coopSendCommand("startWave");
+    setMessage("Start wave request sent.");
+    return;
   }
 
   if(button.id==="autoButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can change Auto Start.");
+
+    coopSendCommand("toggleAuto");
+    setMessage("Auto Start change sent.");
+    return;
   }
 
   if(button.id==="gameSpeedButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can change game speed.");
+
+    coopSendCommand("changeSpeed");
+    setMessage("Game speed change sent.");
+    return;
   }
 
   if(button.id==="rewardButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can use the Supply Drop.");
+
+    coopSendCommand("supplyDrop");
+    setMessage("Supply Drop request sent.");
+    return;
   }
 
   if(button.id==="lobbyButton"){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage(
-      "Only the host can return everyone to the lobby."
-    );
+
+    coopSendCommand("returnToLobby");
+    setMessage("Returning both players to the co-op lobby...");
   }
 },true);
 
@@ -2996,6 +3100,27 @@ abilityBar.addEventListener("click",event=>{
   });
 },true);
 
+resultOverlay.addEventListener("click",event=>{
+  if(
+    !coop.active||
+    coop.role!=="guest"||
+    !coop.started
+  ){
+    return;
+  }
+
+  const button=coopClosestButton(event.target);
+
+  if(!button||button.id!=="continueButton"){
+    return;
+  }
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  coopSendCommand("continueResult");
+},true);
+
 document.addEventListener("keydown",event=>{
   if(
     coop.active&&
@@ -3008,7 +3133,11 @@ document.addEventListener("keydown",event=>{
   ){
     event.preventDefault();
     event.stopImmediatePropagation();
-    setMessage("Only the host can start waves.");
+
+    if(event.repeat)return;
+
+    coopSendCommand("startWave");
+    setMessage("Start wave request sent.");
   }
 },true);
 
@@ -3056,7 +3185,10 @@ coopCopyCodeButton.addEventListener("click",async()=>{
 });
 
 coopMapSelect.addEventListener("change",()=>{
-  if(coop.role!=="host")return;
+  if(coop.role!=="host"){
+    coopSendRoomSettings();
+    return;
+  }
 
   const map=maps[Number(coopMapSelect.value)];
 
@@ -3074,6 +3206,11 @@ coopMapSelect.addEventListener("change",()=>{
 coopDifficultySelect.addEventListener("change",()=>{
   if(coop.role==="host"){
     coopSendRoomSettings();
+    return;
+  }
+
+  if(coop.role==="guest"){
+    coopSendGuestDifficulty();
   }
 });
 
