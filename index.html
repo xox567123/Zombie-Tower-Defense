@@ -1051,34 +1051,51 @@ if(!window.__zombieDefenseCoopLoaded){
 window.__zombieDefenseCoopLoaded=true;
 
 /* -------------------------------------------------------
-   CONNECTION SETTINGS
+CONNECTION SETTINGS
 ------------------------------------------------------- */
-
 const COOP_ICE_SERVERS=[
-  {
-    urls:[
-      "stun:stun.l.google.com:19302",
-      "stun:stun1.l.google.com:19302"
-    ]
-  },
-  {
-    urls:"stun:stun.cloudflare.com:3478"
-  }
+{
+urls:[
+"stun:stun.l.google.com:19302",
+"stun:stun1.l.google.com:19302",
+"stun:stun2.l.google.com:19302",
+"stun:stun3.l.google.com:19302",
+"stun:stun4.l.google.com:19302",
+"stun:stun.cloudflare.com:3478"
+]
+},
+{
+urls:[
+"turn:openrelay.metered.ca:80",
+"turn:openrelay.metered.ca:443",
+"turn:openrelay.metered.ca:443?transport=tcp",
+"turns:openrelay.metered.ca:443?transport=tcp"
+],
+username:"openrelayproject",
+credential:"openrelayproject"
+}
 ];
-
 const COOP_PEER_OPTIONS={
-  debug:0,
-  config:{
-    iceServers:COOP_ICE_SERVERS,
-    iceCandidatePoolSize:10
-  }
+debug:1,
+host:"0.peerjs.com",
+port:443,
+path:"/",
+secure:true,
+pingInterval:5000,
+config:{
+iceServers:COOP_ICE_SERVERS,
+iceTransportPolicy:"all",
+iceCandidatePoolSize:10,
+bundlePolicy:"max-bundle",
+rtcpMuxPolicy:"require",
+sdpSemantics:"unified-plan"
+}
 };
-
-const COOP_CONNECT_TIMEOUT=12000;
+const COOP_CONNECT_TIMEOUT=20000;
 const COOP_RECONNECT_DELAY=1800;
-const COOP_MAX_RECONNECT_ATTEMPTS=6;
+const COOP_MAX_RECONNECT_ATTEMPTS=10;
 const COOP_HEARTBEAT_INTERVAL=5000;
-const COOP_SNAPSHOT_INTERVAL=125;
+const COOP_SNAPSHOT_INTERVAL=200;
 
 /* -------------------------------------------------------
    CO-OP HTML
